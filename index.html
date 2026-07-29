@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>우리 게임 모음</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(100, 200, 255, 0.5);
+    }
+
+    .subtitle {
+      color: #a0c4ff;
+      margin-bottom: 48px;
+      font-size: 1rem;
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .game-card {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .game-card:hover {
+      transform: translateY(-6px);
+      background: rgba(255, 255, 255, 0.13);
+      box-shadow: 0 8px 32px rgba(100, 200, 255, 0.2);
+    }
+
+    .game-card .icon { font-size: 3rem; }
+    .game-card .name { font-size: 1.2rem; font-weight: 600; }
+    .game-card .desc { font-size: 0.85rem; color: #a0c4ff; text-align: center; }
+
+    footer {
+      margin-top: 60px;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 우리 게임 모음</h1>
+  <p class="subtitle">게임을 선택하세요</p>
+
+  <div class="game-grid">
+    <a class="game-card" href="games/puzzle-game/">
+      <span class="icon">🧩</span>
+      <span class="name">퍼즐 게임</span>
+      <span class="desc">조각을 맞춰 그림을 완성하세요</span>
+    </a>
+    <a class="game-card" href="games/quiz-game/">
+      <span class="icon">❓</span>
+      <span class="name">퀴즈 게임</span>
+      <span class="desc">다양한 퀴즈로 지식을 테스트하세요</span>
+    </a>
+    <a class="game-card" href="games/memory-game/">
+      <span class="icon">🧠</span>
+      <span class="name">기억력 게임</span>
+      <span class="desc">카드를 뒤집어 짝을 찾으세요</span>
+    </a>
+  </div>
+
+  <footer>게임 추가 중 · game-school</footer>
+</body>
+</html>

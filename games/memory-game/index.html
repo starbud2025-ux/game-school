@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>기억력 게임</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+    header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; width: 100%; max-width: 520px; }
+    header a { color: #a0c4ff; text-decoration: none; font-size: 0.9rem; }
+    header a:hover { text-decoration: underline; }
+    h1 { font-size: 1.8rem; flex: 1; text-align: center; }
+    #info { display: flex; gap: 24px; margin-bottom: 20px; font-size: 0.95rem; color: #a0c4ff; }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(4, 110px);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .card {
+      width: 110px; height: 110px;
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .card-inner {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.35s;
+    }
+    .card.flipped .card-inner, .card.matched .card-inner { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute; width: 100%; height: 100%;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      backface-visibility: hidden;
+    }
+    .card-front {
+      background: #16213e;
+      border: 2px solid rgba(255,255,255,0.2);
+      font-size: 2rem; color: #555;
+    }
+    .card-back {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.3);
+      transform: rotateY(180deg);
+      font-size: 2.8rem;
+    }
+    .card.matched .card-back { background: rgba(100,220,100,0.2); border-color: #7fff7f; }
+    button {
+      padding: 10px 28px;
+      background: #0f3460;
+      color: #fff;
+      border: 1px solid #a0c4ff;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    button:hover { background: #1a4a80; }
+    #win-msg { margin-top: 16px; font-size: 1.2rem; color: #7fff7f; display: none; text-align: center; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="../../">← 목록으로</a>
+    <h1>🧠 기억력 게임</h1>
+  </header>
+  <div id="info">
+    <span>시도: <strong id="tries">0</strong></span>
+    <span>맞춘 쌍: <strong id="matched">0</strong> / 8</span>
+  </div>
+  <div id="board"></div>
+  <button onclick="init()">새 게임</button>
+  <div id="win-msg">🎉 모든 짝을 찾았어요! 축하합니다!</div>
+
+  <script>
+    const EMOJIS = ['🍎','🍊','🍋','🍇','🍓','🍉','🍑','🥝'];
+    let cards, flipped, tries, matchedCount, lock;
+
+    function init() {
+      tries = 0; matchedCount = 0; flipped = []; lock = false;
+      document.getElementById('tries').textContent = 0;
+      document.getElementById('matched').textContent = 0;
+      document.getElementById('win-msg').style.display = 'none';
+      const pairs = [...EMOJIS, ...EMOJIS];
+      cards = pairs.sort(() => Math.random() - 0.5).map((emoji, i) => ({ id: i, emoji, matched: false }));
+      render();
+    }
+
+    function render() {
+      const board = document.getElementById('board');
+      board.innerHTML = '';
+      cards.forEach(card => {
+        const div = document.createElement('div');
+        div.className = 'card' + (card.matched ? ' matched' : '') +
+          (flipped.some(f => f.id === card.id) ? ' flipped' : '');
+        div.innerHTML = `<div class="card-inner">
+          <div class="card-front">?</div>
+          <div class="card-back">${card.emoji}</div>
+        </div>`;
+        if (!card.matched && !flipped.some(f => f.id === card.id))
+          div.onclick = () => flip(card);
+        board.appendChild(div);
+      });
+    }
+
+    function flip(card) {
+      if (lock || flipped.length >= 2) return;
+      flipped.push(card);
+      render();
+      if (flipped.length === 2) {
+        tries++;
+        document.getElementById('tries').textContent = tries;
+        lock = true;
+        setTimeout(() => {
+          if (flipped[0].emoji === flipped[1].emoji) {
+            flipped.forEach(f => cards[f.id].matched = true);
+            matchedCount++;
+            document.getElementById('matched').textContent = matchedCount;
+            if (matchedCount === EMOJIS.length) {
+              document.getElementById('win-msg').style.display = 'block';
+            }
+          }
+          flipped = [];
+          lock = false;
+          render();
+        }, 900);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
