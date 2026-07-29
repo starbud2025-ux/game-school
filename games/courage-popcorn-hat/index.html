@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>용기 팝콘 모자 🎩</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: '맑은 고딕', 'Segoe UI', sans-serif;
+      background: radial-gradient(ellipse at 50% -5%, #3d1a6e 0%, #1a0a2e 55%, #0d0520 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 18px 20px 4px;
+      text-align: center;
+      width: 100%;
+    }
+    header a { color: #c084fc; text-decoration: none; font-size: 0.9rem; }
+    header a:hover { text-decoration: underline; }
+
+    h1 {
+      color: #fff;
+      font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+      margin-top: 8px;
+      text-shadow: 0 0 30px rgba(192,132,252,0.7);
+    }
+    .subtitle {
+      color: #c084fc;
+      font-size: clamp(0.85rem, 2.5vw, 1.05rem);
+      margin-top: 6px;
+    }
+
+    /* ── Hat ── */
+    #hat-area {
+      position: relative;
+      width: min(260px, 70vw);
+      height: min(280px, 75vw);
+      margin: 14px auto 0;
+      flex-shrink: 0;
+    }
+    #hat-svg { width: 100%; height: 100%; }
+
+    #hat-svg.shake { animation: hatShake 0.13s ease-in-out 10; }
+    @keyframes hatShake {
+      0%,100% { transform: rotate(0) translateX(0); }
+      25%      { transform: rotate(-7deg) translateX(-5px); }
+      75%      { transform: rotate(7deg)  translateX(5px); }
+    }
+
+    /* ── Sparkles ── */
+    #sparkle-layer { position: absolute; inset: 0; pointer-events: none; }
+    .sp {
+      position: absolute;
+      font-size: 1.3rem;
+      pointer-events: none;
+      animation: spOut 0.9s ease-out forwards;
+    }
+    @keyframes spOut {
+      0%  { opacity: 0; transform: scale(0) translate(0,0); }
+      35% { opacity: 1; transform: scale(1.5) translate(var(--mx),var(--my)); }
+      100%{ opacity: 0; transform: scale(0.2) translate(var(--ex),var(--ey)); }
+    }
+
+    /* ── Input ── */
+    #input-area {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; margin-top: 16px; padding: 0 24px;
+      width: 100%; max-width: 400px;
+    }
+    #input-area label {
+      color: #e2c4ff;
+      font-size: clamp(0.95rem, 3vw, 1.1rem);
+      text-align: center;
+    }
+    #word-input {
+      width: 100%; padding: 14px 16px;
+      font-size: clamp(1.1rem, 3.5vw, 1.3rem);
+      font-family: inherit;
+      border: 2.5px solid #8b5cf6; border-radius: 18px;
+      background: rgba(255,255,255,0.08); color: #fff;
+      text-align: center; outline: none;
+      transition: border-color .2s, background .2s, box-shadow .2s;
+    }
+    #word-input::placeholder { color: rgba(255,255,255,0.35); }
+    #word-input:focus {
+      border-color: #ffd700; background: rgba(255,255,255,0.13);
+      box-shadow: 0 0 20px rgba(255,215,0,0.25);
+    }
+    #word-input:disabled { opacity: .5; }
+
+    #submit-btn {
+      width: 100%; padding: 15px;
+      font-size: clamp(1.1rem, 3.5vw, 1.3rem); font-weight: 700; font-family: inherit;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff; border: none; border-radius: 18px; cursor: pointer;
+      box-shadow: 0 4px 20px rgba(124,58,237,.5);
+      transition: transform .15s, box-shadow .15s;
+    }
+    #submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 28px rgba(168,85,247,.6);
+    }
+    #submit-btn:active:not(:disabled) { transform: scale(.97); }
+    #submit-btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+    /* ── Flying word ── */
+    #fly {
+      position: fixed; z-index: 200; pointer-events: none;
+      font-size: clamp(1.3rem, 4vw, 1.8rem); font-weight: 800;
+      color: #ffd700; text-shadow: 0 0 12px rgba(255,215,0,.6);
+      display: none; white-space: nowrap;
+    }
+
+    /* ── Popcorn overlay ── */
+    #pop-area { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
+    .corn {
+      position: absolute; display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 12px;
+      font-weight: 700; color: #4a1a00; line-height: 1.3; word-break: keep-all;
+      background: radial-gradient(circle at 35% 30%, #fff9cc, #ffd966 60%, #f0c010);
+      box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 2px 6px rgba(255,255,255,.4);
+      opacity: 0; pointer-events: auto; cursor: pointer;
+      transition: box-shadow .2s, filter .2s;
+    }
+    .corn:hover {
+      box-shadow: 0 8px 28px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,255,255,.4);
+      filter: brightness(1.12);
+    }
+
+    /* ── Zoom ── */
+    #zoom-bg {
+      position: fixed; inset: 0; background: rgba(10,4,28,.82);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 300; cursor: pointer; padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity .22s;
+    }
+    #zoom-bg.on { opacity: 1; pointer-events: auto; }
+    #zoom-card {
+      background: radial-gradient(circle at 35% 30%, #fffbcc, #ffd966 60%, #f0c010);
+      border-radius: 28px; padding: 44px 48px; max-width: 500px; width: 100%;
+      text-align: center;
+      font-size: clamp(1.25rem, 4vw, 2rem); font-weight: 800; color: #4a1a00;
+      line-height: 1.5; word-break: keep-all;
+      box-shadow: 0 12px 50px rgba(0,0,0,.6);
+    }
+    #zoom-bg.on #zoom-card { animation: zIn .32s cubic-bezier(.34,1.56,.64,1) forwards; }
+    @keyframes zIn {
+      from { transform: scale(.2) rotate(-5deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0);      opacity: 1; }
+    }
+    #zoom-hint {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,.4); font-size: .85rem; pointer-events: none;
+    }
+
+    /* ── Reset ── */
+    #reset-btn {
+      display: none; margin: 20px auto 40px;
+      padding: 14px 40px;
+      font-size: clamp(1rem, 3vw, 1.1rem); font-family: inherit; font-weight: 600;
+      background: rgba(255,255,255,.08); color: #e2c4ff;
+      border: 2px solid rgba(192,132,252,.4); border-radius: 18px; cursor: pointer;
+      transition: background .2s, border-color .2s;
+    }
+    #reset-btn:hover { background: rgba(192,132,252,.15); border-color: rgba(192,132,252,.7); }
+    #reset-btn.show { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="../../">← 게임 목록으로</a>
+  <h1>🎩 용기 팝콘 모자</h1>
+  <p class="subtitle">무서운 것을 모자에 넣으면 용기로 바뀌어요!</p>
+</header>
+
+<!-- Magic Hat SVG -->
+<div id="hat-area">
+  <svg id="hat-svg" viewBox="0 0 280 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="bg" cx="30%" cy="20%" r="75%">
+        <stop offset="0%" stop-color="#6832c0"/>
+        <stop offset="100%" stop-color="#2d1060"/>
+      </radialGradient>
+      <radialGradient id="br" cx="30%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#3d1580"/>
+        <stop offset="100%" stop-color="#1a0740"/>
+      </radialGradient>
+    </defs>
+    <!-- Shadow -->
+    <ellipse cx="140" cy="266" rx="128" ry="14" fill="rgba(0,0,0,.4)"/>
+    <!-- Brim -->
+    <ellipse cx="140" cy="258" rx="126" ry="17" fill="#110530"/>
+    <ellipse cx="140" cy="253" rx="123" ry="14" fill="url(#br)"/>
+    <!-- Body -->
+    <rect x="60" y="72" width="160" height="183" rx="4" fill="url(#bg)"/>
+    <!-- Body highlight -->
+    <rect x="60" y="72" width="16" height="183" rx="4" fill="rgba(255,255,255,.07)"/>
+    <!-- Band -->
+    <rect x="60" y="220" width="160" height="22" rx="2" fill="#1a0740"/>
+    <rect x="60" y="220" width="160" height="9"  rx="2" fill="rgba(192,132,252,.22)"/>
+    <!-- Stars -->
+    <text x="76"  y="128" font-size="24" fill="#ffd700" opacity=".9">★</text>
+    <text x="184" y="174" font-size="20" fill="#ffd700" opacity=".85">✦</text>
+    <text x="88"  y="200" font-size="14" fill="#ffd700" opacity=".7">★</text>
+    <text x="166" y="113" font-size="16" fill="#ffd700" opacity=".8">✦</text>
+    <text x="148" y="158" font-size="10" fill="#ffd700" opacity=".45">★</text>
+    <!-- Bow -->
+    <ellipse cx="120" cy="231" rx="17" ry="10" fill="#a855f7" opacity=".9"/>
+    <ellipse cx="160" cy="231" rx="17" ry="10" fill="#a855f7" opacity=".9"/>
+    <circle  cx="140" cy="230" r="9"  fill="#c084fc"/>
+    <circle  cx="140" cy="230" r="5"  fill="#e9d5ff"/>
+    <!-- Opening -->
+    <ellipse cx="140" cy="73" rx="77" ry="10" fill="#0d0522"/>
+    <ellipse cx="140" cy="71" rx="77" ry="4.5" fill="rgba(100,60,200,.35)"/>
+  </svg>
+  <div id="sparkle-layer"></div>
+</div>
+
+<div id="fly"></div>
+
+<div id="input-area">
+  <label for="word-input">무서운 것을 써보세요</label>
+  <input id="word-input" type="text" placeholder="예: 어둠, 시험, 발표…"
+         maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false"/>
+  <button id="submit-btn" onclick="go()">🎩 모자에 넣기</button>
+</div>
+
+<button id="reset-btn" onclick="reset()">🔄 다시 하기</button>
+
+<div id="pop-area"></div>
+
+<div id="zoom-bg" onclick="closeZoom()">
+  <div id="zoom-card"></div>
+  <div id="zoom-hint">화면을 누르면 닫혀요</div>
+</div>
+
+<script>
+'use strict';
+
+// ── Word Dictionary ──────────────────────────────────────────
+const DICT = {
+  '어둠':   ['어두워도 네 마음속엔 빛이 반짝여 🌟','어둠은 잠깐이야, 금방 환해져!','불 꺼져도 괜찮아, 용감한 네가 있어 💫','어둠도 너를 무서워할걸?','눈 감으면 마음속 별이 보여 ✨'],
+  '귀신':   ['귀신도 용감한 너한테는 도망가!','무서운 건 딱 잠깐, 넌 할 수 있어 💪','귀신보다 네 용기가 훨씬 세!','크게 "괜찮아!" 하고 외쳐봐 🦁','무서워도 앞으로 가면 용감한 거야'],
+  '시험':   ['열심히 한 만큼 잘할 수 있어! 💫','결과보다 도전한 네가 멋져 ✨','실수해도 괜찮아, 그게 배움이야','넌 이미 충분히 잘하고 있어 🌈','시험은 네 성장을 보여주는 거야'],
+  '발표':   ['목소리가 떨려도 괜찮아, 그게 용기야!','발표하는 너, 진짜 대단해 👑','한 번 해보면 생각보다 쉬울 거야 💪','모두 네 말을 듣고 싶어해','떨림도 힘이 될 수 있어 🌟'],
+  '벌레':   ['벌레는 너보다 훨씬 작아, 괜찮아!','멀리서 보면 무섭지 않아 🌿','피해 가면 돼, 그것도 지혜야','다음엔 덜 무서울 거야, 약속해!','벌레도 자기 집에서 사는 거야'],
+  '병원':   ['병원은 너를 도와주는 곳이야 🏥','아픈 걸 낫게 해주는 멋진 곳!','주사는 잠깐이고, 건강은 오래가!','의사 선생님은 네 편이야 💊','용감하게 가는 네가 정말 멋져 💪'],
+  '이별':   ['이별이 아프지만 기억은 영원해 💖','슬퍼도 괜찮아, 그만큼 소중했어','새로운 만남이 기다리고 있어 🌈','울어도 괜찮아, 눈물도 용기야','네 따뜻한 마음이 이별을 슬프게 해'],
+  '실수':   ['실수는 성장의 발판이야 🌱','실수 없이 잘하는 사람은 없어','다음에 더 잘할 기회야 ✨','실수해도 너는 충분히 괜찮아 💫','실수 인정한 네가 이미 용감해 💪'],
+  '혼자':   ['혼자여도 너는 충분해 🌟','곧 친구가 생길 거야, 믿어봐','혼자만의 시간도 소중해 💖','너는 혼자가 아니야, 응원해!','혼자서도 잘하는 네가 대단해'],
+  '낯선':   ['낯선 것도 친해지면 좋아져','처음이 어렵지, 두 번째는 달라!','새로운 것은 새로운 기쁨이야 🌈','낯설어도 도전하는 네가 멋져 ✨','모든 친한 것도 처음엔 낯설었어'],
+  '천둥':   ['천둥은 구름의 소리야, 안전해 ⛅','무서운 소리도 지나가면 조용해져','비가 온 뒤엔 무지개가 나와 🌈','천둥보다 네 용기가 더 크게 울려 💪','따뜻한 곳에서 기다리면 돼 🏠'],
+  '주사':   ['따끔하지만 건강해지는 거야 💉','잠깐만 참으면 끝나, 넌 할 수 있어!','주사 후엔 더 건강해져 🌟','3, 2, 1… 끝! 정말 잘했어!','용감하게 맞은 네가 진짜 멋져 💪'],
+  '싸움':   ['화를 말로 표현하는 네가 용감해 💬','이해하려 노력하면 풀릴 거야 💖','화해도 정말 큰 용기야 🤝','미안하다 말할 수 있는 네가 멋져','마음이 상해도 시간이 지나면 괜찮아'],
+  '높은':   ['천천히 올라가면 돼, 서두르지 않아도 돼','한 발씩 가다 보면 어느새 정상이야!','높은 곳엔 더 멋진 풍경이 기다려 🌄','무서워도 한 발씩, 넌 할 수 있어 💪','내려다보면 내가 얼마나 용감한지 알아'],
+  '거짓말': ['솔직하게 말하는 게 더 용감해 💪','진실을 말하면 마음이 가벼워져','고백하는 것, 정말 대단해 🌟','솔직한 네가 훨씬 멋져'],
+  '어른':   ['어른들도 처음엔 다 무서워했어','모르면 물어봐도 돼, 그게 용감해 💬','솔직히 말하는 네가 멋져','너를 도와주고 싶은 어른들이 많아 💖'],
+};
+
+const FALLBACK = [
+  '괜찮아, 너는 생각보다 훨씬 용감해! 💪',
+  '그 마음, 충분히 이겨낼 수 있어 🌟',
+  '무서워도 해내는 게 진짜 용기야',
+  '지금 이 순간도 잘 버티고 있어, 대단해!',
+  '넌 생각보다 훨씬 강한 아이야 🦁',
+  '떨려도 괜찮아, 그게 용기의 시작이야',
+  '모든 용감한 사람도 처음엔 무서웠어',
+  '너의 마음이 벌써 반은 이겼어! 💫',
+  '한 발짝씩 가다 보면 길이 열려 🌈',
+  '지금 잘하고 있어, 진짜야!',
+  '걱정은 구름 같아, 바람 불면 사라져 ☁️',
+  '작은 용기가 큰 변화를 만들어',
+  '오늘 조금만 용감해 보자, 할 수 있어!',
+  '실패해도 괜찮아, 도전했잖아 💖',
+  '너는 혼자가 아니야, 언제나 응원해 🎉',
+  '두려움이 있다는 건 성장하고 있다는 뜻!',
+  '넌 매일 조금씩 더 용감해지고 있어',
+  '걱정보다 네 능력이 훨씬 커 💪',
+  '지금 이 순간 너의 용기를 응원해 ✨',
+  '무섭더라도 괜찮아, 함께 이겨낼 수 있어',
+  '조금만 더 힘내, 분명 좋아질 거야',
+  '넌 이 무서움도 이겨낼 수 있어 🌟',
+  '무서운 감정도 너의 일부야, 괜찮아',
+  '무서워도 괜찮다고 말할 수 있는 네가 용감해',
+  '네 용기를 믿어, 넌 충분히 할 수 있어 🌈',
+];
+
+const BLOBS = [
+  '58% 42% 52% 48% / 52% 58% 42% 50%',
+  '42% 58% 48% 52% / 50% 42% 58% 52%',
+  '52% 48% 58% 42% / 45% 55% 48% 58%',
+  '48% 52% 42% 58% / 58% 45% 52% 42%',
+  '50% 50% 45% 55% / 55% 50% 58% 42%',
+];
+
+// ── Audio ────────────────────────────────────────────────────
+let _ac = null;
+function ac() { return _ac || (_ac = new (window.AudioContext || window.webkitAudioContext)()); }
+
+function playMagic() {
+  try {
+    const c = ac(), notes = [440, 554, 659, 784, 1047];
+    notes.forEach((f, i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'triangle';
+      const t = c.currentTime + i * 0.09;
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.exponentialRampToValueAtTime(f * 1.4, t + 0.12);
+      g.gain.setValueAtTime(0.1, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+      o.start(t); o.stop(t + 0.35);
+    });
+  } catch(e) {}
+}
+
+function playPop() {
+  try {
+    const c = ac();
+    const len = Math.floor(c.sampleRate * 0.06);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const flt = c.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = 700;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.45, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.12);
+    src.connect(flt); flt.connect(g); g.connect(c.destination);
+    src.start(); src.stop(c.currentTime + 0.13);
+
+    const o = c.createOscillator(), g2 = c.createGain();
+    o.connect(g2); g2.connect(c.destination);
+    o.frequency.setValueAtTime(280, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(720, c.currentTime + 0.07);
+    o.frequency.exponentialRampToValueAtTime(200, c.currentTime + 0.18);
+    g2.gain.setValueAtTime(0.28, c.currentTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.2);
+    o.start(c.currentTime); o.stop(c.currentTime + 0.2);
+  } catch(e) {}
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+function shuffle(a) {
+  const b = [...a];
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [b[i], b[j]] = [b[j], b[i]];
+  }
+  return b;
+}
+
+function getMsgs(word) {
+  for (const k of Object.keys(DICT))
+    if (word.includes(k)) return shuffle(DICT[k]).slice(0, 5);
+  return shuffle(FALLBACK).slice(0, 5);
+}
+
+// ── State ────────────────────────────────────────────────────
+let busy = false;
+
+// ── Phase 1: fly word into hat ───────────────────────────────
+function go() {
+  const inp = document.getElementById('word-input');
+  const word = inp.value.trim();
+  if (!word || busy) return;
+  busy = true;
+  inp.disabled = true;
+  inp.blur();
+  document.getElementById('submit-btn').disabled = true;
+
+  const msgs = getMsgs(word);
+
+  const inpR  = inp.getBoundingClientRect();
+  const hatR  = document.getElementById('hat-svg').getBoundingClientRect();
+  const tgtX  = hatR.left + hatR.width * 0.5;
+  const tgtY  = hatR.top  + hatR.height * 0.24;
+  const startX = inpR.left + inpR.width * 0.5;
+  const startY = inpR.top  + inpR.height * 0.5;
+  const dtx = tgtX - startX, dty = tgtY - startY;
+
+  const fly = document.getElementById('fly');
+  fly.textContent = word;
+  fly.style.cssText = `display:block;left:${startX}px;top:${startY}px;transform:translate(-50%,-50%) scale(1);opacity:1;transition:none;`;
+  void fly.offsetWidth;
+  fly.style.transition = 'transform .78s cubic-bezier(.4,0,1,.6), opacity .78s ease-in';
+  fly.style.transform  = `translate(calc(-50% + ${dtx}px), calc(-50% + ${dty}px)) scale(.04)`;
+  fly.style.opacity    = '0';
+
+  setTimeout(() => { fly.style.display = 'none'; shakeHat(msgs); }, 820);
+}
+
+// ── Phase 2: shake hat + sparkles ───────────────────────────
+function shakeHat(msgs) {
+  const hat   = document.getElementById('hat-svg');
+  const layer = document.getElementById('sparkle-layer');
+  const syms  = ['✨','⭐','🌟','💫','✦','★'];
+
+  playMagic();
+  hat.classList.add('shake');
+
+  for (let i = 0; i < 9; i++) {
+    setTimeout(() => {
+      const sp = document.createElement('div');
+      sp.className = 'sp';
+      sp.textContent = syms[Math.floor(Math.random() * syms.length)];
+      sp.style.left = (10 + Math.random() * 80) + '%';
+      sp.style.top  = ( 2 + Math.random() * 35) + '%';
+      const ang = Math.random() * Math.PI * 2;
+      const d1  = 40 + Math.random() * 60;
+      const d2  = 80 + Math.random() * 100;
+      sp.style.setProperty('--mx', Math.cos(ang) * d1 + 'px');
+      sp.style.setProperty('--my', Math.sin(ang) * d1 - 30 + 'px');
+      sp.style.setProperty('--ex', Math.cos(ang) * d2 * 1.6 + 'px');
+      sp.style.setProperty('--ey', Math.sin(ang) * d2 - 60 + 'px');
+      layer.appendChild(sp);
+      setTimeout(() => sp.remove(), 950);
+    }, i * 130);
+  }
+
+  setTimeout(() => {
+    hat.classList.remove('shake');
+    playPop();
+    spawnPopcorns(msgs);
+  }, 1500);
+}
+
+// ── Phase 3: spawn popcorns ──────────────────────────────────
+function spawnPopcorns(msgs) {
+  const area = document.getElementById('pop-area');
+  area.innerHTML = '';
+
+  const hatR   = document.getElementById('hat-svg').getBoundingClientRect();
+  const origX  = hatR.left + hatR.width * 0.5;
+  const origY  = hatR.top  + hatR.height * 0.24;
+  const vw = innerWidth, vh = innerHeight;
+  const sz = Math.min(165, Math.max(112, vw * 0.155));
+  const fs = sz < 130 ? '0.7rem' : '0.82rem';
+
+  // scatter targets (center of popcorn as fraction of viewport)
+  const tgts = [
+    [0.12, 0.13],
+    [0.81, 0.13],
+    [0.06, 0.68],
+    [0.83, 0.65],
+    [0.45, 0.88],
+  ];
+
+  msgs.slice(0, 5).forEach((msg, i) => {
+    const [fx, fy] = tgts[i];
+    const pad = sz / 2 + 12;
+    const cx  = Math.max(pad, Math.min(vw - pad, fx * vw));
+    const cy  = Math.max(pad, Math.min(vh - pad, fy * vh));
+    const tx  = cx - origX, ty = cy - origY;
+
+    const div = document.createElement('div');
+    div.className = 'corn';
+    div.style.cssText = `left:${origX - sz/2}px;top:${origY - sz/2}px;width:${sz}px;height:${sz}px;font-size:${fs};border-radius:${BLOBS[i]};`;
+    div.textContent = msg;
+    div.onclick = () => zoom(msg);
+    area.appendChild(div);
+
+    const anim = div.animate([
+      { opacity: 0, transform: 'translate(0,0) scale(0)' },
+      { opacity: 1, transform: `translate(${tx}px,${ty - 22}px) scale(1.18)`, offset: 0.54 },
+      { opacity: 1, transform: `translate(${tx}px,${ty + 14}px) scale(0.96)`, offset: 0.72 },
+      { opacity: 1, transform: `translate(${tx}px,${ty -  7}px) scale(1.04)`, offset: 0.84 },
+      { opacity: 1, transform: `translate(${tx}px,${ty}px) scale(1)` },
+    ], { duration: 760 + i * 75, delay: i * 85, fill: 'forwards', easing: 'ease-out' });
+
+    anim.onfinish = () => {
+      div.style.transform = `translate(${tx}px,${ty}px)`;
+      div.style.opacity   = '1';
+      anim.cancel();
+    };
+  });
+
+  setTimeout(() => {
+    document.getElementById('reset-btn').classList.add('show');
+    busy = false;
+  }, 1900);
+}
+
+// ── Zoom ─────────────────────────────────────────────────────
+function zoom(msg) {
+  const card = document.getElementById('zoom-card');
+  card.textContent = msg;
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
+  document.getElementById('zoom-bg').classList.add('on');
+}
+function closeZoom() { document.getElementById('zoom-bg').classList.remove('on'); }
+
+// ── Reset ────────────────────────────────────────────────────
+function reset() {
+  document.getElementById('pop-area').innerHTML = '';
+  document.getElementById('reset-btn').classList.remove('show');
+  const inp = document.getElementById('word-input');
+  inp.value = ''; inp.disabled = false;
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('fly').style.display = 'none';
+  document.getElementById('zoom-bg').classList.remove('on');
+  busy = false;
+  inp.focus();
+}
+
+document.getElementById('word-input').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+</script>
+</body>
+</html>
