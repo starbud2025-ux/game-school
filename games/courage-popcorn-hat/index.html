@@ -59,7 +59,7 @@
       text-shadow: 0 0 7px #c084fc, 0 0 14px rgba(192,132,252,.5);
       background: rgba(110, 50, 210, 0.35);
       border-radius: 6px; padding: 2px 6px;
-      white-space: nowrap;
+      word-break: break-word; white-space: normal;
       animation: ghostIn .45s cubic-bezier(.34,1.56,.64,1);
     }
     @keyframes ghostIn {
@@ -135,7 +135,7 @@
       transform-origin: center center;
     }
     .card-emo  { font-size: 1.7rem; line-height: 1; }
-    .card-word { font-size: 1.35rem; font-weight: 800; color: #2d1060; margin-top: 4px; }
+    .card-word { font-size: 1.2rem; font-weight: 800; color: #2d1060; margin-top: 4px; word-break: break-word; white-space: normal; text-align: center; max-width: 200px; line-height: 1.3; }
 
     /* ── Popcorn overlay ── */
     #pop-area { position: fixed; inset: 0; pointer-events: none; z-index: 100; }
@@ -212,7 +212,7 @@
 <div id="input-area">
   <label for="word-input">무서운 것을 써보세요</label>
   <input id="word-input" type="text" placeholder="예: 어둠, 시험, 발표…"
-         maxlength="15" autocomplete="off" spellcheck="false"/>
+         maxlength="40" autocomplete="off" spellcheck="false"/>
   <button id="add-btn" onclick="addWord()">🎩 모자에 넣기</button>
 </div>
 
@@ -381,12 +381,12 @@ function addWord() {
   /* Set up flying card */
   const card = document.getElementById('fly-card');
   card.querySelector('.card-word').textContent = word;
-  const cW = 170, cH = 88;
+  const cW = 230, cH = 110;
   Object.assign(card.style, {
     display: 'flex',
     left: (startX - cW/2) + 'px',
     top:  (startY - cH/2) + 'px',
-    width: cW + 'px', height: cH + 'px',
+    width: cW + 'px', minHeight: cH + 'px', height: 'auto',
     opacity: '0',
     transform: 'translate(0,0) scale(0.3)',
   });
