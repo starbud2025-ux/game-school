@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>달라도 친구 빙고 🌈</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: '맑은 고딕', 'Segoe UI', sans-serif;
+      background: linear-gradient(150deg, #fff8f2 0%, #fef0fb 45%, #f0f6ff 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 48px;
+    }
+
+    /* ── Header ── */
+    header { padding: 16px 20px 0; text-align: center; width: 100%; }
+    header a { color: #a855f7; text-decoration: none; font-size: 0.88rem; }
+    header a:hover { text-decoration: underline; }
+
+    /* ── Title ── */
+    .title-area { text-align: center; margin-top: 12px; padding: 0 20px; }
+    .game-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f472b6, #a855f7);
+      color: #fff; font-size: 0.78rem; font-weight: 700;
+      padding: 3px 12px; border-radius: 20px; margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+    h1 {
+      font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+      color: #2d1060;
+      line-height: 1.25;
+    }
+    .h1-rainbow { background: linear-gradient(90deg,#f472b6,#a855f7,#60a5fa,#34d399); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .subtitle {
+      margin-top: 6px;
+      font-size: clamp(1rem, 3vw, 1.3rem);
+      color: #7c3aed; font-weight: 700;
+    }
+    .guide {
+      margin-top: 10px;
+      font-size: clamp(0.82rem, 2.2vw, 0.95rem);
+      color: #6b7280; line-height: 1.6;
+    }
+
+    /* ── Bingo grid ── */
+    .bingo-wrap {
+      margin-top: 20px;
+      width: min(520px, calc(100vw - 28px));
+    }
+
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 16px;
+      background: #fff;
+      border: 3px solid var(--c);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .cell:focus-within { box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+
+    .cell-bar {
+      height: 6px;
+      background: var(--c);
+      flex-shrink: 0;
+    }
+
+    .cell textarea {
+      flex: 1;
+      width: 100%;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: clamp(0.85rem, 2.2vw, 1rem);
+      font-weight: 600;
+      color: #2d1060;
+      background: transparent;
+      text-align: center;
+      padding: 8px 8px 6px;
+      line-height: 1.4;
+      word-break: keep-all;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cell textarea::placeholder { color: #d1c5e8; font-weight: 400; font-size: 0.8rem; }
+
+    /* ── spinning animation ── */
+    .cell.spinning {
+      animation: spinCard 0.75s ease-in-out forwards;
+    }
+    @keyframes spinCard {
+      0%   { transform: perspective(500px) rotateY(0deg)   scale(1);    filter: brightness(1); }
+      25%  { transform: perspective(500px) rotateY(90deg)  scale(0.88); filter: brightness(0.7); }
+      50%  { transform: perspective(500px) rotateY(180deg) scale(0.88); filter: brightness(0.7); }
+      75%  { transform: perspective(500px) rotateY(270deg) scale(0.88); filter: brightness(0.7); }
+      100% { transform: perspective(500px) rotateY(360deg) scale(1);    filter: brightness(1); }
+    }
+
+    /* ── done (lit-up) state ── */
+    .cell.done {
+      background: var(--done);
+      border-color: transparent;
+      box-shadow: 0 4px 18px var(--glow);
+    }
+    .cell.done .cell-bar { background: rgba(255,255,255,.3); }
+    .cell.done textarea {
+      color: #fff;
+      font-weight: 800;
+      text-shadow: 0 1px 4px rgba(0,0,0,.25);
+    }
+
+    /* ── Start button ── */
+    .btn-wrap { margin-top: 20px; width: 100%; display: flex; justify-content: center; }
+    #start-btn {
+      padding: 16px 52px;
+      font-size: clamp(1.05rem, 3.5vw, 1.35rem);
+      font-weight: 800; font-family: inherit;
+      background: linear-gradient(135deg, #f472b6, #a855f7);
+      color: #fff; border: none; border-radius: 20px; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(168,85,247,.4);
+      transition: transform .15s, box-shadow .15s;
+    }
+    #start-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 28px rgba(168,85,247,.55);
+    }
+    #start-btn:disabled { opacity: .35; cursor: default; transform: none; }
+    #start-btn:not(:disabled) { animation: btnPulse 1.8s ease-in-out infinite; }
+    @keyframes btnPulse {
+      0%,100% { box-shadow: 0 4px 18px rgba(168,85,247,.4); }
+      50%      { box-shadow: 0 4px 30px rgba(244,114,182,.7), 0 0 0 7px rgba(244,114,182,.12); }
+    }
+
+    /* ── Celebration overlay ── */
+    #celebration {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 300; pointer-events: none;
+      transition: background .5s;
+      overflow: hidden;
+      padding: 20px;
+    }
+    #celebration.show { background: rgba(0,0,0,.72); pointer-events: auto; }
+
+    .msg-box {
+      background: #fff;
+      border-radius: 28px;
+      padding: 40px 44px;
+      text-align: center;
+      max-width: 460px; width: 100%;
+      box-shadow: 0 16px 60px rgba(0,0,0,.5);
+      opacity: 0; transform: scale(0.3) rotate(-5deg);
+    }
+    #celebration.show .msg-box {
+      animation: msgPop .45s .25s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes msgPop {
+      to { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .msg-emoji { font-size: clamp(2.5rem, 8vw, 3.5rem); line-height: 1; }
+    .msg-main {
+      margin-top: 14px;
+      font-size: clamp(1.7rem, 6vw, 2.4rem);
+      font-weight: 900;
+      background: linear-gradient(90deg,#f472b6,#a855f7,#60a5fa,#34d399);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.2;
+    }
+    .msg-sub {
+      margin-top: 12px;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      color: #6b7280; line-height: 1.6;
+    }
+    #reset-btn {
+      margin-top: 22px;
+      padding: 13px 38px;
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 700; font-family: inherit;
+      background: linear-gradient(135deg, #f472b6, #a855f7);
+      color: #fff; border: none; border-radius: 16px; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(168,85,247,.4);
+      transition: transform .15s;
+    }
+    #reset-btn:hover { transform: scale(1.04); }
+
+    /* ── Confetti ── */
+    .confetti {
+      position: absolute; top: -70px;
+      pointer-events: none; user-select: none;
+      animation: cfFall linear forwards;
+    }
+    @keyframes cfFall {
+      0%   { top: -70px; opacity: 1; transform: rotate(0deg); }
+      85%  { opacity: 1; }
+      100% { top: 110vh; opacity: 0; transform: rotate(540deg); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="../../">← 게임 목록으로</a>
+</header>
+
+<div class="title-area">
+  <div class="game-badge">📚 달라도 친구</div>
+  <h1><span class="h1-rainbow">달라도 친구</span> 빙고 🌈</h1>
+  <p class="subtitle">친구가 될 수 있는 조건은? 🤔</p>
+  <p class="guide">
+    아홉 칸에 <strong>친구가 될 수 있는 조건</strong>을 자유롭게 써보세요!<br>
+    다 썼으면 <strong>"친구가 될 수 있을까?"</strong> 버튼을 눌러봐요 ✨
+  </p>
+</div>
+
+<div class="bingo-wrap">
+  <div class="bingo-grid" id="grid">
+    <!-- 9 cells generated by JS -->
+  </div>
+  <div class="btn-wrap">
+    <button id="start-btn" disabled onclick="startSpin()">친구가 될 수 있을까? 🤔</button>
+  </div>
+</div>
+
+<!-- Celebration overlay -->
+<div id="celebration">
+  <div class="msg-box">
+    <div class="msg-emoji">🌈💖🌈</div>
+    <div class="msg-main">달라도 친구지!</div>
+    <p class="msg-sub">
+      우리가 쓴 조건들이 모두 달라도 괜찮아요!<br>
+      달라서 더 재미있는 친구들이에요 🦋✨
+    </p>
+    <button id="reset-btn" onclick="doReset()">🔄 다시 해볼까요?</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ── Cell colour palette ─────────────────────────────────────── */
+const PALETTE = [
+  { c:'#f472b6', done:'linear-gradient(135deg,#f472b6,#ec4899)', glow:'rgba(244,114,182,.45)' },
+  { c:'#fbbf24', done:'linear-gradient(135deg,#fbbf24,#f59e0b)', glow:'rgba(251,191,36,.45)' },
+  { c:'#60a5fa', done:'linear-gradient(135deg,#60a5fa,#3b82f6)', glow:'rgba(96,165,250,.45)' },
+  { c:'#34d399', done:'linear-gradient(135deg,#34d399,#10b981)', glow:'rgba(52,211,153,.45)' },
+  { c:'#a78bfa', done:'linear-gradient(135deg,#a78bfa,#7c3aed)', glow:'rgba(167,139,250,.45)' },
+  { c:'#fb923c', done:'linear-gradient(135deg,#fb923c,#ea580c)', glow:'rgba(251,146,60,.45)' },
+  { c:'#f43f5e', done:'linear-gradient(135deg,#f43f5e,#e11d48)', glow:'rgba(244,63,94,.45)' },
+  { c:'#22d3ee', done:'linear-gradient(135deg,#22d3ee,#06b6d4)', glow:'rgba(34,211,238,.45)' },
+  { c:'#84cc16', done:'linear-gradient(135deg,#84cc16,#65a30d)', glow:'rgba(132,204,22,.45)' },
+];
+
+const PLACEHOLDERS = [
+  '같이 놀기 🎮',
+  '웃기기 😄',
+  '서로 도와주기 🤝',
+  '비밀 지키기 🤫',
+  '달라도 괜찮아 🌈',
+  '힘들 때 옆에 있기 💛',
+  '같이 밥 먹기 🍱',
+  '솔직하게 말하기 💬',
+  '응원해 주기 📣',
+];
+
+const CF_SYMS = ['❤️','⭐','🌈','💫','🎉','🌸','💝','✨','🦋','🌺','💖','🎊'];
+
+/* ── Build grid ──────────────────────────────────────────────── */
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  PALETTE.forEach((pal, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.setProperty('--c', pal.c);
+    cell.style.setProperty('--done', pal.done);
+    cell.style.setProperty('--glow', pal.glow);
+    cell.innerHTML = `
+      <div class="cell-bar"></div>
+      <textarea rows="3" placeholder="${PLACEHOLDERS[i]}"></textarea>
+    `;
+    grid.appendChild(cell);
+  });
+
+  /* Enable button when any cell has text */
+  grid.addEventListener('input', () => {
+    const any = Array.from(grid.querySelectorAll('textarea')).some(t => t.value.trim());
+    document.getElementById('start-btn').disabled = !any;
+  });
+}
+
+/* ── Spin & reveal ───────────────────────────────────────────── */
+function startSpin() {
+  const cells = Array.from(document.querySelectorAll('.cell'));
+  const filled = cells.filter(c => c.querySelector('textarea').value.trim());
+  if (!filled.length) return;
+
+  /* Lock everything */
+  document.getElementById('start-btn').disabled = true;
+  cells.forEach(c => { c.querySelector('textarea').disabled = true; });
+
+  let spunCount = 0;
+  filled.forEach((cell, idx) => {
+    setTimeout(() => {
+      cell.classList.add('spinning');
+      cell.addEventListener('animationend', () => {
+        cell.classList.remove('spinning');
+        cell.classList.add('done');
+        spunCount++;
+        if (spunCount === filled.length) {
+          /* All done → show celebration */
+          setTimeout(showCelebration, 500);
+        }
+      }, { once: true });
+    }, idx * 160);
+  });
+}
+
+/* ── Celebration ─────────────────────────────────────────────── */
+function showCelebration() {
+  const overlay = document.getElementById('celebration');
+  overlay.classList.add('show');
+  spawnConfetti(overlay, 30);
+}
+
+function spawnConfetti(container, n) {
+  for (let i = 0; i < n; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.textContent = CF_SYMS[Math.floor(Math.random() * CF_SYMS.length)];
+    el.style.cssText = `
+      left: ${Math.random() * 100}%;
+      font-size: ${0.9 + Math.random() * 1.4}rem;
+      animation-duration: ${2.2 + Math.random() * 2.5}s;
+      animation-delay: ${Math.random() * 2}s;
+    `;
+    container.appendChild(el);
+  }
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+function doReset() {
+  /* Clear confetti */
+  document.querySelectorAll('.confetti').forEach(e => e.remove());
+  document.getElementById('celebration').classList.remove('show');
+
+  /* Reset cells */
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.classList.remove('done', 'spinning');
+    const ta = cell.querySelector('textarea');
+    ta.value = '';
+    ta.disabled = false;
+  });
+
+  document.getElementById('start-btn').disabled = true;
+}
+
+/* ── Init ────────────────────────────────────────────────────── */
+buildGrid();
+</script>
+</body>
+</html>
