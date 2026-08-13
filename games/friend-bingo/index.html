@@ -401,12 +401,11 @@ function startSpin() {
   document.getElementById('start-btn').disabled = true;
   cells.forEach(c => { c.querySelector('textarea').disabled = true; });
 
-  const bombAt = Math.floor(Math.random() * filled.length);
   const STAGGER = 160, BOMB_MS = 900;
   const total = filled.length;
 
   filled.forEach((cell, idx) => {
-    const isBomb = idx === bombAt;
+    const isBomb = cells.indexOf(cell) === 6; /* 맨 아래 왼쪽 고정 */
     setTimeout(() => {
       const cls = isBomb ? 'bomb-spin' : 'spinning';
       cell.classList.add(cls);
