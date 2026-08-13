@@ -205,22 +205,26 @@
 
     /* ── Bomb cell ─────────────────────────────────── */
     .cell.bomb-spin {
-      animation: bombShake 0.9s ease-in-out forwards;
+      animation: bombShake 1.15s ease-in-out forwards;
     }
     @keyframes bombShake {
       0%   { transform: scale(1) rotate(0); filter: brightness(1); }
-      10%  { transform: scale(1.1) rotate(-8deg) translate(-3px,-2px); filter: brightness(1.5); }
-      25%  { transform: scale(0.9) rotate(8deg) translate(3px,2px); filter: brightness(0.7); }
-      40%  { transform: scale(1.14) rotate(-10deg) translate(-4px,1px); filter: brightness(2) saturate(2); }
-      55%  { transform: scale(0.87) rotate(10deg) translate(4px,-1px); filter: brightness(0.6); }
-      70%  { transform: scale(1.07) rotate(-5deg) translate(-2px,0); filter: brightness(1.3); }
-      85%  { transform: scale(0.95) rotate(3deg); }
+      5%   { transform: scale(1.06) rotate(-6deg) translate(-2px,-3px); filter: brightness(1.4); }
+      15%  { transform: scale(0.9) rotate(8deg) translate(5px,4px); filter: brightness(0.65); }
+      25%  { transform: scale(1.2) rotate(-13deg) translate(-7px,-5px); filter: brightness(2.2) saturate(3); }
+      35%  { transform: scale(0.8) rotate(13deg) translate(7px,5px); filter: brightness(0.45); }
+      45%  { transform: scale(1.25) rotate(-15deg) translate(-8px,-6px); filter: brightness(2.8) saturate(5); }
+      55%  { transform: scale(0.76) rotate(15deg) translate(8px,6px); filter: brightness(0.35); }
+      65%  { transform: scale(1.2) rotate(-10deg) translate(-5px,-3px); filter: brightness(2.1); }
+      75%  { transform: scale(0.87) rotate(7deg) translate(4px,2px); filter: brightness(0.7); }
+      85%  { transform: scale(1.07) rotate(-4deg); filter: brightness(1.3); }
+      93%  { transform: scale(0.97) rotate(2deg); }
       100% { transform: scale(1) rotate(0); filter: brightness(1); }
     }
     .cell.bomb-done {
-      background: linear-gradient(135deg,#374151,#111827) !important;
+      background: linear-gradient(135deg,#1c1c1c,#0a0a0a) !important;
       border-color: #ef4444 !important;
-      box-shadow: 0 4px 24px rgba(239,68,68,.55) !important;
+      box-shadow: 0 0 32px rgba(239,68,68,.7), 0 4px 24px rgba(0,0,0,.8) !important;
     }
     .cell.bomb-done .cell-bar { background: #ef4444 !important; }
     .bomb-inner {
@@ -230,12 +234,33 @@
       justify-content: center;
     }
     .bomb-icon {
-      font-size: 1.9rem;
-      animation: bombIconPop 0.4s cubic-bezier(.34,1.56,.64,1) forwards;
+      font-size: 2rem;
+      animation: bombIconPop 0.5s cubic-bezier(.34,1.56,.64,1) forwards;
     }
     @keyframes bombIconPop {
-      from { opacity: 0; transform: scale(0.1) rotate(-30deg); }
-      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+      0%  { opacity: 0; transform: scale(0.1) rotate(-40deg); }
+      60% { opacity: 1; transform: scale(1.4) rotate(10deg); }
+      80% { transform: scale(0.85) rotate(-5deg); }
+      100%{ opacity: 1; transform: scale(1) rotate(0); }
+    }
+
+    /* ── Smoke & explosion ──────────────────────────── */
+    .smoke-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 490;
+      transform-origin: center bottom;
+      animation: smokeRise ease-out forwards;
+    }
+    @keyframes smokeRise {
+      0%   { opacity: 0.95; transform: scale(0.4) translate(0, 0) rotate(0deg); }
+      40%  { opacity: 0.7;  transform: scale(1.5) translate(var(--drift,0px), -80px) rotate(20deg); }
+      100% { opacity: 0;    transform: scale(3)   translate(calc(var(--drift,0px)*2), -200px) rotate(60deg); }
+    }
+    @keyframes explodeCircle {
+      0%   { width: 0; height: 0; opacity: 1; }
+      40%  { width: 280px; height: 280px; opacity: 0.9; }
+      100% { width: 800px; height: 800px; opacity: 0; }
     }
 
     /* ── Bomb popup ─────────────────────────────────── */
@@ -243,42 +268,67 @@
       position: fixed;
       top: 50%; left: 50%;
       transform: translate(-50%,-50%) scale(0);
-      background: #111827;
-      border: 4px solid #ef4444;
-      border-radius: 24px;
-      padding: 32px 52px;
+      background: #0a0a0a;
+      border: 5px solid #ef4444;
+      border-radius: 28px;
+      padding: 40px 56px;
       text-align: center;
       z-index: 500;
-      box-shadow: 0 8px 60px rgba(239,68,68,.65), 0 0 0 8px rgba(239,68,68,.1);
+      box-shadow: 0 0 0 12px rgba(239,68,68,.15), 0 16px 90px rgba(239,68,68,.75);
       opacity: 0;
       pointer-events: none;
-      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      transition: transform .45s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      min-width: 280px;
     }
     #bomb-popup.show {
       transform: translate(-50%,-50%) scale(1);
       opacity: 1;
+      pointer-events: auto;
     }
     .bomb-popup-emoji {
-      font-size: 3rem;
+      font-size: 4.5rem;
       line-height: 1;
       display: block;
-      animation: bombEmojiPop .5s .1s cubic-bezier(.34,1.56,.64,1) both;
+      animation: bombEmojiWiggle .6s .2s cubic-bezier(.34,1.56,.64,1) both;
     }
-    @keyframes bombEmojiPop {
-      from { transform: scale(0.3) rotate(-20deg); opacity: 0; }
-      to   { transform: scale(1) rotate(0); opacity: 1; }
+    @keyframes bombEmojiWiggle {
+      0%   { transform: scale(0.1) rotate(-40deg); opacity: 0; }
+      55%  { transform: scale(1.35) rotate(12deg); opacity: 1; }
+      75%  { transform: scale(0.88) rotate(-6deg); }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
     }
     .bomb-popup-msg {
-      margin-top: 14px;
-      font-size: clamp(1.15rem, 4vw, 1.6rem);
+      margin-top: 18px;
+      font-size: clamp(1.3rem, 5vw, 2rem);
       font-weight: 900;
       color: #fca5a5;
       line-height: 1.3;
+      text-shadow: 0 0 24px rgba(239,68,68,.55);
     }
     .bomb-popup-sub {
-      margin-top: 8px;
-      font-size: 0.85rem;
+      margin-top: 10px;
+      font-size: 0.9rem;
       color: #6b7280;
+    }
+    .bomb-reset-btn {
+      display: block;
+      width: 100%;
+      margin-top: 26px;
+      padding: 15px 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      font-family: inherit;
+      background: linear-gradient(135deg,#ef4444,#dc2626);
+      color: #fff;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      box-shadow: 0 4px 22px rgba(239,68,68,.5);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .bomb-reset-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 8px 32px rgba(239,68,68,.7);
     }
 
     /* ── Confetti ── */
@@ -324,6 +374,7 @@
   <span class="bomb-popup-emoji">💣💥</span>
   <div class="bomb-popup-msg">그건 좀<br>안되겠는데~???</div>
   <div class="bomb-popup-sub">다른 조건을 생각해봐요! 😅</div>
+  <button class="bomb-reset-btn" onclick="doReset()">🔄 다시 해보기</button>
 </div>
 
 <!-- Celebration overlay -->
@@ -401,7 +452,8 @@ function startSpin() {
   document.getElementById('start-btn').disabled = true;
   cells.forEach(c => { c.querySelector('textarea').disabled = true; });
 
-  const STAGGER = 160, BOMB_MS = 900;
+  const bombCellFilled = cells[6].querySelector('textarea').value.trim();
+  const STAGGER = 160, BOMB_MS = 1150;
   const total = filled.length;
 
   filled.forEach((cell, idx) => {
@@ -418,7 +470,9 @@ function startSpin() {
           bEl.className = 'bomb-inner';
           bEl.innerHTML = '<span class="bomb-icon">💣</span>';
           cell.appendChild(bEl);
-          showBombMsg();
+          flashExplosion(cell);
+          spawnSmoke(cell);
+          setTimeout(showBombMsg, 350);
         } else {
           cell.classList.add('done');
         }
@@ -426,8 +480,10 @@ function startSpin() {
     }, idx * STAGGER);
   });
 
-  /* Wait for worst-case: bomb is last cell + popup fades */
-  setTimeout(showCelebration, (total - 1) * STAGGER + BOMB_MS + 3200);
+  /* 폭탄 칸이 채워져 있으면 팝업으로 종료, 없으면 축하 화면 표시 */
+  if (!bombCellFilled) {
+    setTimeout(showCelebration, (total - 1) * STAGGER + 750 + 600);
+  }
 }
 
 /* ── Celebration ─────────────────────────────────────────────── */
@@ -457,7 +513,50 @@ function showBombMsg() {
   const popup = document.getElementById('bomb-popup');
   popup.classList.add('show');
   playBoom();
-  setTimeout(() => popup.classList.remove('show'), 2600);
+  /* 닫기는 "다시 해보기" 버튼으로만 */
+}
+
+function flashExplosion(cell) {
+  const rect = cell.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed; left:${cx}px; top:${cy}px;
+    width:0; height:0; border-radius:50%;
+    background: radial-gradient(circle,
+      rgba(255,255,180,1) 0%,
+      rgba(255,160,0,.9) 35%,
+      rgba(255,50,0,.6) 65%,
+      transparent 100%);
+    z-index:480; pointer-events:none;
+    transform:translate(-50%,-50%);
+    animation: explodeCircle .75s ease-out forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 800);
+}
+
+function spawnSmoke(cell) {
+  const rect = cell.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  ['💨','💨','💨','🌫️','💨','💨','💨'].forEach((sym, i) => {
+    const el = document.createElement('div');
+    el.className = 'smoke-particle';
+    el.textContent = sym;
+    const drift = (Math.random() - 0.5) * 100;
+    el.style.cssText = `
+      left:${cx + (Math.random() - 0.5) * 40}px;
+      top:${cy}px;
+      --drift:${drift}px;
+      font-size:${1.1 + Math.random() * 1}rem;
+      animation-duration:${1 + Math.random() * 0.8}s;
+      animation-delay:${i * 0.07 + Math.random() * 0.05}s;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  });
 }
 
 function playBoom() {
