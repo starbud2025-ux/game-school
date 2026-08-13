@@ -203,6 +203,84 @@
     }
     #reset-btn:hover { transform: scale(1.04); }
 
+    /* ── Bomb cell ─────────────────────────────────── */
+    .cell.bomb-spin {
+      animation: bombShake 0.9s ease-in-out forwards;
+    }
+    @keyframes bombShake {
+      0%   { transform: scale(1) rotate(0); filter: brightness(1); }
+      10%  { transform: scale(1.1) rotate(-8deg) translate(-3px,-2px); filter: brightness(1.5); }
+      25%  { transform: scale(0.9) rotate(8deg) translate(3px,2px); filter: brightness(0.7); }
+      40%  { transform: scale(1.14) rotate(-10deg) translate(-4px,1px); filter: brightness(2) saturate(2); }
+      55%  { transform: scale(0.87) rotate(10deg) translate(4px,-1px); filter: brightness(0.6); }
+      70%  { transform: scale(1.07) rotate(-5deg) translate(-2px,0); filter: brightness(1.3); }
+      85%  { transform: scale(0.95) rotate(3deg); }
+      100% { transform: scale(1) rotate(0); filter: brightness(1); }
+    }
+    .cell.bomb-done {
+      background: linear-gradient(135deg,#374151,#111827) !important;
+      border-color: #ef4444 !important;
+      box-shadow: 0 4px 24px rgba(239,68,68,.55) !important;
+    }
+    .cell.bomb-done .cell-bar { background: #ef4444 !important; }
+    .bomb-inner {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bomb-icon {
+      font-size: 1.9rem;
+      animation: bombIconPop 0.4s cubic-bezier(.34,1.56,.64,1) forwards;
+    }
+    @keyframes bombIconPop {
+      from { opacity: 0; transform: scale(0.1) rotate(-30deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    /* ── Bomb popup ─────────────────────────────────── */
+    #bomb-popup {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      background: #111827;
+      border: 4px solid #ef4444;
+      border-radius: 24px;
+      padding: 32px 52px;
+      text-align: center;
+      z-index: 500;
+      box-shadow: 0 8px 60px rgba(239,68,68,.65), 0 0 0 8px rgba(239,68,68,.1);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+    }
+    #bomb-popup.show {
+      transform: translate(-50%,-50%) scale(1);
+      opacity: 1;
+    }
+    .bomb-popup-emoji {
+      font-size: 3rem;
+      line-height: 1;
+      display: block;
+      animation: bombEmojiPop .5s .1s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes bombEmojiPop {
+      from { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+      to   { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .bomb-popup-msg {
+      margin-top: 14px;
+      font-size: clamp(1.15rem, 4vw, 1.6rem);
+      font-weight: 900;
+      color: #fca5a5;
+      line-height: 1.3;
+    }
+    .bomb-popup-sub {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
     /* ── Confetti ── */
     .confetti {
       position: absolute; top: -70px;
@@ -239,6 +317,13 @@
   <div class="btn-wrap">
     <button id="start-btn" disabled onclick="startSpin()">친구가 될 수 있을까? 🤔</button>
   </div>
+</div>
+
+<!-- Bomb popup -->
+<div id="bomb-popup">
+  <span class="bomb-popup-emoji">💣💥</span>
+  <div class="bomb-popup-msg">그건 좀<br>안되겠는데~???</div>
+  <div class="bomb-popup-sub">다른 조건을 생각해봐요! 😅</div>
 </div>
 
 <!-- Celebration overlay -->
@@ -313,25 +398,37 @@ function startSpin() {
   const filled = cells.filter(c => c.querySelector('textarea').value.trim());
   if (!filled.length) return;
 
-  /* Lock everything */
   document.getElementById('start-btn').disabled = true;
   cells.forEach(c => { c.querySelector('textarea').disabled = true; });
 
-  let spunCount = 0;
+  const bombAt = Math.floor(Math.random() * filled.length);
+  const STAGGER = 160, BOMB_MS = 900;
+  const total = filled.length;
+
   filled.forEach((cell, idx) => {
+    const isBomb = idx === bombAt;
     setTimeout(() => {
-      cell.classList.add('spinning');
+      const cls = isBomb ? 'bomb-spin' : 'spinning';
+      cell.classList.add(cls);
       cell.addEventListener('animationend', () => {
-        cell.classList.remove('spinning');
-        cell.classList.add('done');
-        spunCount++;
-        if (spunCount === filled.length) {
-          /* All done → show celebration */
-          setTimeout(showCelebration, 500);
+        cell.classList.remove(cls);
+        if (isBomb) {
+          cell.classList.add('bomb-done');
+          cell.querySelector('textarea').style.display = 'none';
+          const bEl = document.createElement('div');
+          bEl.className = 'bomb-inner';
+          bEl.innerHTML = '<span class="bomb-icon">💣</span>';
+          cell.appendChild(bEl);
+          showBombMsg();
+        } else {
+          cell.classList.add('done');
         }
       }, { once: true });
-    }, idx * 160);
+    }, idx * STAGGER);
   });
+
+  /* Wait for worst-case: bomb is last cell + popup fades */
+  setTimeout(showCelebration, (total - 1) * STAGGER + BOMB_MS + 3200);
 }
 
 /* ── Celebration ─────────────────────────────────────────────── */
@@ -356,16 +453,55 @@ function spawnConfetti(container, n) {
   }
 }
 
+/* ── Bomb popup & sound ──────────────────────────────────────── */
+function showBombMsg() {
+  const popup = document.getElementById('bomb-popup');
+  popup.classList.add('show');
+  playBoom();
+  setTimeout(() => popup.classList.remove('show'), 2600);
+}
+
+function playBoom() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(90, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(35, ctx.currentTime + 0.55);
+    gain.gain.setValueAtTime(0.38, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.65);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + 0.65);
+
+    const len = Math.floor(ctx.sampleRate * 0.4);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = ctx.createBufferSource();
+    const g2 = ctx.createGain();
+    src.buffer = buf;
+    g2.gain.setValueAtTime(0.48, ctx.currentTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    src.connect(g2); g2.connect(ctx.destination);
+    src.start(); src.stop(ctx.currentTime + 0.45);
+  } catch (e) { /* no audio — silent fallback */ }
+}
+
 /* ── Reset ───────────────────────────────────────────────────── */
 function doReset() {
-  /* Clear confetti */
   document.querySelectorAll('.confetti').forEach(e => e.remove());
   document.getElementById('celebration').classList.remove('show');
 
+  /* Reset bomb popup */
+  document.getElementById('bomb-popup').classList.remove('show');
+
   /* Reset cells */
   document.querySelectorAll('.cell').forEach(cell => {
-    cell.classList.remove('done', 'spinning');
+    cell.classList.remove('done', 'spinning', 'bomb-done', 'bomb-spin');
+    cell.querySelector('.bomb-inner')?.remove();
     const ta = cell.querySelector('textarea');
+    ta.style.display = '';
     ta.value = '';
     ta.disabled = false;
   });
