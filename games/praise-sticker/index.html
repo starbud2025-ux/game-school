@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>칭찬 스티커판 ⭐</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: '맑은 고딕', 'Segoe UI', sans-serif;
+      background: linear-gradient(150deg, #f0f9ff 0%, #fdf4ff 50%, #fff8f0 100%);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding-bottom: 60px;
+    }
+
+    header { width: 100%; padding: 14px 20px; }
+    header a { color: #7c3aed; text-decoration: none; font-size: 0.88rem; }
+    header a:hover { text-decoration: underline; }
+
+    /* ── List view ── */
+    #view-list { width: 100%; max-width: 520px; padding: 0 16px; }
+
+    .page-top { text-align: center; margin-bottom: 22px; }
+    .page-badge {
+      display: inline-block;
+      background: linear-gradient(135deg,#fbbf24,#f59e0b);
+      color:#fff; font-size:.78rem; font-weight:700;
+      padding: 3px 12px; border-radius: 20px; margin-bottom: 8px;
+    }
+    .page-top h1 { font-size: clamp(1.5rem,4.5vw,2.2rem); color:#1e1b4b; }
+    .page-top p { margin-top: 6px; font-size: .88rem; color: #6b7280; }
+
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
+      gap: 12px; margin-bottom: 16px;
+    }
+    .student-card {
+      background: #fff; border-radius: 18px; padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      cursor: pointer; border: 2px solid transparent;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+      position: relative;
+    }
+    .student-card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,.11); border-color: #a78bfa; }
+    .s-name { font-size: 1.1rem; font-weight: 800; color: #1e1b4b; margin-bottom: 10px; }
+    .s-stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .s-stat {
+      font-size: .78rem; font-weight: 600; color: #4b5563;
+      background: #f3f4f6; padding: 3px 9px; border-radius: 10px;
+    }
+    .del-btn {
+      position: absolute; top: 10px; right: 12px;
+      background: none; border: none; cursor: pointer;
+      color: #d1d5db; font-size: .95rem; transition: color .15s;
+    }
+    .del-btn:hover { color: #ef4444; }
+
+    .add-form {
+      background: #fff; border-radius: 18px; padding: 18px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07);
+      display: flex; gap: 10px;
+    }
+    .add-form input {
+      flex: 1; border: 2px solid #e5e7eb; border-radius: 12px;
+      padding: 10px 14px; font-family: inherit; font-size: 1rem; outline: none;
+      transition: border-color .15s;
+    }
+    .add-form input:focus { border-color: #a78bfa; }
+    .add-form button {
+      background: linear-gradient(135deg,#a78bfa,#7c3aed); color:#fff;
+      border: none; border-radius: 12px; padding: 10px 18px;
+      font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer;
+      white-space: nowrap; transition: transform .1s;
+    }
+    .add-form button:hover { transform: scale(1.04); }
+
+    /* ── Student detail view ── */
+    #view-student { width: 100%; max-width: 520px; padding: 0 16px; display: none; }
+
+    .stu-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .back-btn {
+      background: #f3f4f6; border: none; border-radius: 12px;
+      padding: 8px 14px; font-size: .9rem; cursor: pointer;
+      font-family: inherit; color: #374151; transition: background .15s;
+    }
+    .back-btn:hover { background: #e5e7eb; }
+    .stu-name { font-size: 1.4rem; font-weight: 800; color: #1e1b4b; flex: 1; }
+
+    /* Category buttons */
+    .cat-btns { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .cat-btn {
+      flex: 1; min-width: 64px;
+      padding: 10px 4px; border: 3px solid transparent;
+      border-radius: 14px; font-family: inherit;
+      font-size: clamp(.75rem,1.9vw,.88rem); font-weight: 700;
+      cursor: pointer; transition: transform .12s;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    .cat-btn:hover { transform: translateY(-2px); }
+    .cat-btn.on { border-color: #1e1b4b; box-shadow: 0 0 0 2px rgba(30,27,75,.15); }
+    .cat-emoji { font-size: 1.3rem; }
+    .cat-hint {
+      text-align: center; font-size: .8rem; color: #9ca3af;
+      margin-bottom: 10px; min-height: 1.1em;
+    }
+
+    /* Sticker grid */
+    .grid-card {
+      background: #fff; border-radius: 20px; padding: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07); margin-bottom: 16px;
+    }
+    .grid-label { font-size: .8rem; font-weight: 700; color: #9ca3af; margin-bottom: 10px; }
+    .sticker-grid {
+      display: grid; grid-template-columns: repeat(5,1fr); gap: 8px;
+    }
+    .sticker-cell {
+      aspect-ratio: 1; border-radius: 12px;
+      border: 2px dashed #e5e7eb; background: #fafafa;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(1.2rem,3.5vw,1.55rem);
+      transition: background .2s, border-color .2s;
+      position: relative; overflow: hidden;
+    }
+    .sticker-cell.filled { border-style: solid; }
+    .sticker-cell.converting {
+      animation: cellGold .75s ease-in-out forwards;
+      transition: none;
+    }
+    @keyframes cellGold {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.18); background: #fde68a; box-shadow: 0 0 18px rgba(251,191,36,.9); border-color: #f59e0b; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .s-new { animation: stickerPop .42s cubic-bezier(.34,1.56,.64,1) forwards; }
+    @keyframes stickerPop {
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
+      60%  { transform: scale(1.35) rotate(6deg); opacity: 1; }
+      80%  { transform: scale(.88) rotate(-3deg); }
+      to   { transform: scale(1) rotate(0); opacity: 1; }
+    }
+
+    /* Monthly progress */
+    .section-card {
+      background: #fff; border-radius: 20px; padding: 18px 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.07); margin-bottom: 14px;
+    }
+    .sec-label { font-size: .8rem; font-weight: 700; color: #9ca3af; margin-bottom: 10px; }
+    .goal-text { font-size: .9rem; font-weight: 700; color: #1e1b4b; margin-bottom: 8px; }
+    .bar-wrap { background: #f3f4f6; border-radius: 100px; height: 16px; overflow: hidden; }
+    .bar-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg,#fbbf24,#f59e0b);
+      transition: width .55s cubic-bezier(.34,1.56,.64,1);
+    }
+    .month-medals { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; min-height: 30px; align-items: center; }
+    .m-medal { font-size: 1.4rem; animation: mPop .38s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes mPop {
+      from { transform: scale(0) rotate(-10deg); opacity: 0; }
+      60%  { transform: scale(1.3) rotate(6deg); opacity: 1; }
+      80%  { transform: scale(.88) rotate(-2deg); }
+      to   { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    .goal-reached {
+      font-size: .85rem; font-weight: 700; color: #f59e0b; margin-top: 6px;
+      display: none;
+    }
+
+    /* Medal display */
+    .medals-wrap { display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; align-items: center; }
+    .m-badge {
+      font-size: 2rem;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,.18));
+      animation: mShine 2.8s ease-in-out infinite;
+    }
+    @keyframes mShine {
+      0%,100% { filter: drop-shadow(0 2px 3px rgba(0,0,0,.18)); }
+      50%      { filter: drop-shadow(0 0 8px rgba(255,215,0,.9)) brightness(1.25); }
+    }
+    .medal-count {
+      margin-top: 10px; font-size: 1rem; font-weight: 800; color: #1e1b4b;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* Celebration */
+    #celebration {
+      position: fixed; inset: 0; background: rgba(0,0,0,0);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 400; pointer-events: none; transition: background .4s; overflow: hidden;
+      padding: 20px;
+    }
+    #celebration.show { background: rgba(0,0,0,.65); pointer-events: auto; }
+    .cel-box {
+      background: #fff; border-radius: 28px; padding: 40px 44px;
+      text-align: center; max-width: 360px; width: 100%;
+      box-shadow: 0 16px 60px rgba(0,0,0,.5);
+      opacity: 0; transform: scale(.2);
+    }
+    #celebration.show .cel-box { animation: cPop .45s .2s cubic-bezier(.34,1.56,.64,1) forwards; }
+    @keyframes cPop { to { opacity:1; transform: scale(1); } }
+    .cel-emoji { font-size: 3rem; }
+    .cel-title { font-size: 1.85rem; font-weight: 900; color: #1e1b4b; margin: 12px 0 8px; }
+    .cel-sub { color: #6b7280; font-size: .95rem; line-height: 1.6; }
+    .cel-btn {
+      margin-top: 22px; padding: 13px 38px;
+      background: linear-gradient(135deg,#fbbf24,#f59e0b); color: #fff;
+      border: none; border-radius: 16px; font-size: 1.05rem; font-weight: 700;
+      font-family: inherit; cursor: pointer; transition: transform .1s;
+    }
+    .cel-btn:hover { transform: scale(1.04); }
+
+    /* Confetti */
+    .confetti { position: absolute; top: -60px; pointer-events: none; animation: cfFall linear forwards; }
+    @keyframes cfFall { to { top: 110vh; opacity: 0; transform: rotate(540deg); } }
+
+    /* Empty state */
+    .empty { text-align: center; padding: 40px 0; color: #9ca3af; grid-column: 1/-1; }
+    .empty .ei { font-size: 2.8rem; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="../../">← 게임 목록으로</a>
+</header>
+
+<!-- ── LIST VIEW ── -->
+<div id="view-list">
+  <div class="page-top">
+    <div class="page-badge">🏫 칭찬 스티커</div>
+    <h1>⭐ 칭찬 스티커판</h1>
+    <p>5칸 한 줄을 채우면 금메달! 한 학기 동안 모아봐요 🥇</p>
+  </div>
+  <div class="student-grid" id="student-grid"></div>
+  <div class="add-form">
+    <input id="name-input" type="text" placeholder="학생 이름 입력" maxlength="12">
+    <button onclick="addStudent()">추가 ✚</button>
+  </div>
+</div>
+
+<!-- ── STUDENT VIEW ── -->
+<div id="view-student">
+  <div class="stu-header">
+    <button class="back-btn" onclick="showList()">← 목록</button>
+    <div class="stu-name" id="stu-name-disp"></div>
+  </div>
+
+  <div class="cat-btns" id="cat-btns"></div>
+  <div class="cat-hint" id="cat-hint">칭찬 종류를 선택하면 스티커가 붙어요!</div>
+
+  <div class="grid-card">
+    <div class="grid-label">스티커판 (한 줄 5칸 = 금메달 🥇)</div>
+    <div class="sticker-grid" id="sticker-grid"></div>
+  </div>
+
+  <div class="section-card">
+    <div class="sec-label">📅 이번 달 목표</div>
+    <div class="goal-text" id="goal-text"></div>
+    <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+    <div class="month-medals" id="month-medals"></div>
+    <div class="goal-reached" id="goal-reached">🎉 이번 달 목표 달성! 간식 교환권 🍬</div>
+  </div>
+
+  <div class="section-card">
+    <div class="sec-label">🏅 획득한 금메달</div>
+    <div class="medals-wrap" id="medals-wrap"></div>
+    <div class="medal-count">🥇 총 <strong id="medal-total">0</strong>개</div>
+  </div>
+</div>
+
+<!-- ── CELEBRATION ── -->
+<div id="celebration">
+  <div class="cel-box">
+    <div class="cel-emoji" id="cel-emoji">🥇</div>
+    <div class="cel-title" id="cel-title">금메달 획득!</div>
+    <p class="cel-sub" id="cel-sub"></p>
+    <button class="cel-btn" onclick="closeCel()">와, 감사해요! ✨</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const CATS = [
+  { name:'배려', emoji:'🩷', color:'#f472b6', bg:'#fce7f3', text:'#9d174d' },
+  { name:'성실', emoji:'💛', color:'#f59e0b', bg:'#fef3c7', text:'#92400e' },
+  { name:'용기', emoji:'💙', color:'#3b82f6', bg:'#dbeafe', text:'#1e40af' },
+  { name:'협동', emoji:'💚', color:'#10b981', bg:'#d1fae5', text:'#065f46' },
+  { name:'정직', emoji:'💜', color:'#7c3aed', bg:'#ede9fe', text:'#4c1d95' },
+];
+const MONTHLY_GOAL = 3;
+const KEY = 'praise_sticker_v1';
+const CF = ['⭐','🌟','💫','✨','🌸','🎉','💝','🏅'];
+
+let students = [];
+let cur = null;   // current student index
+let selCat = null;
+
+/* ── Persistence ──────────────────────────────────── */
+function save() { localStorage.setItem(KEY, JSON.stringify(students)); }
+function load() {
+  try { const d = localStorage.getItem(KEY); if (d) students = JSON.parse(d); }
+  catch(e) { students = []; }
+}
+
+function monthKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function checkMonth(st) {
+  const mk = monthKey();
+  if (st.monthKey !== mk) { st.monthMedals = 0; st.monthKey = mk; }
+}
+
+/* ── Student ops ──────────────────────────────────── */
+function addStudent() {
+  const inp = document.getElementById('name-input');
+  const name = inp.value.trim();
+  if (!name) { inp.focus(); return; }
+  if (students.some(s => s.name === name)) { alert('같은 이름이 있어요!'); return; }
+  students.push({
+    name,
+    stickers: new Array(25).fill(null),
+    medals: 0, monthMedals: 0, monthKey: monthKey()
+  });
+  inp.value = '';
+  save(); renderList();
+}
+
+function delStudent(idx, e) {
+  e.stopPropagation();
+  if (!confirm(`"${students[idx].name}" 학생을 삭제할까요?`)) return;
+  students.splice(idx, 1);
+  save(); renderList();
+}
+
+/* ── List view ────────────────────────────────────── */
+function renderList() {
+  const grid = document.getElementById('student-grid');
+  if (!students.length) {
+    grid.innerHTML = `<div class="empty"><div class="ei">👶</div><p>이름을 입력해서 학생을 추가해봐요!</p></div>`;
+    return;
+  }
+  grid.innerHTML = students.map((s, i) => {
+    checkMonth(s);
+    const filled = s.stickers.filter(c => c !== null).length;
+    return `<div class="student-card" onclick="showStudent(${i})">
+      <button class="del-btn" onclick="delStudent(${i},event)">✕</button>
+      <div class="s-name">👤 ${s.name}</div>
+      <div class="s-stats">
+        <span class="s-stat">📌 ${filled}칸</span>
+        <span class="s-stat">🥇 ${s.medals}개</span>
+        <span class="s-stat">📅 이달 ${s.monthMedals}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showList() {
+  cur = null; selCat = null;
+  document.getElementById('view-list').style.display = '';
+  document.getElementById('view-student').style.display = 'none';
+  renderList();
+}
+
+/* ── Student view ─────────────────────────────────── */
+function showStudent(idx) {
+  cur = idx; selCat = null;
+  const st = students[idx];
+  checkMonth(st);
+  document.getElementById('view-list').style.display = 'none';
+  document.getElementById('view-student').style.display = '';
+  document.getElementById('stu-name-disp').textContent = `${st.name}`;
+  renderCats();
+  renderGrid();
+  renderMonthly(st);
+  renderMedals(st);
+}
+
+/* ── Category buttons ─────────────────────────────── */
+function renderCats() {
+  document.getElementById('cat-btns').innerHTML = CATS.map((c, i) =>
+    `<button class="cat-btn${selCat===i?' on':''}"
+       style="background:${c.bg};color:${c.text};"
+       onclick="pickCat(${i})">
+       <span class="cat-emoji">${c.emoji}</span>${c.name}
+     </button>`
+  ).join('');
+  document.getElementById('cat-hint').textContent =
+    selCat !== null
+      ? `${CATS[selCat].emoji} ${CATS[selCat].name} 칭찬 스티커가 붙었어요!`
+      : '칭찬 종류를 선택하면 스티커가 붙어요!';
+}
+
+function pickCat(i) {
+  selCat = i;
+  renderCats();
+  placeSticker();
+}
+
+/* ── Sticker placement ────────────────────────────── */
+function placeSticker() {
+  if (selCat === null) return;
+  const st = students[cur];
+  const emptyIdx = st.stickers.indexOf(null);
+  if (emptyIdx === -1) { alert('스티커판이 꽉 찼어요!'); return; }
+
+  st.stickers[emptyIdx] = selCat;
+  save();
+
+  /* Update only the changed cell — no full re-render */
+  const c = CATS[selCat];
+  const cell = document.querySelectorAll('.sticker-cell')[emptyIdx];
+  cell.classList.add('filled');
+  cell.style.background = c.bg;
+  cell.style.borderColor = c.color;
+  cell.style.borderStyle = 'solid';
+  cell.innerHTML = `<span class="s-new">${c.emoji}</span>`;
+  playTick();
+
+  /* Check row */
+  const row = Math.floor(emptyIdx / 5);
+  if (st.stickers.slice(row*5, row*5+5).every(c => c !== null)) {
+    setTimeout(() => convertRow(row), 320);
+  }
+  selCat = null;
+  renderCats();
+}
+
+function convertRow(row) {
+  const st = students[cur];
+  const cells = document.querySelectorAll('.sticker-cell');
+  for (let c = 0; c < 5; c++) cells[row*5+c].classList.add('converting');
+  playRowComplete();
+  setTimeout(() => {
+    for (let c = 0; c < 5; c++) {
+      st.stickers[row*5+c] = null;
+      const cell = cells[row*5+c];
+      cell.classList.remove('filled','converting');
+      cell.style.cssText = '';
+      cell.innerHTML = '';
+    }
+    st.medals++;
+    st.monthMedals++;
+    save();
+    renderMonthly(st);
+    renderMedals(st);
+    showCelebration(st);
+  }, 800);
+}
+
+/* ── Grid render ──────────────────────────────────── */
+function renderGrid() {
+  const st = students[cur];
+  document.getElementById('sticker-grid').innerHTML = st.stickers.map((cat) => {
+    if (cat === null) return `<div class="sticker-cell"></div>`;
+    const c = CATS[cat];
+    return `<div class="sticker-cell filled" style="background:${c.bg};border-color:${c.color};border-style:solid;">${c.emoji}</div>`;
+  }).join('');
+}
+
+/* ── Monthly progress ─────────────────────────────── */
+function renderMonthly(st) {
+  const pct = Math.min(100, (st.monthMedals / MONTHLY_GOAL) * 100);
+  document.getElementById('bar-fill').style.width = pct + '%';
+  document.getElementById('goal-text').textContent =
+    `이번 달 목표: 금메달 ${MONTHLY_GOAL}개`;
+  document.getElementById('month-medals').innerHTML =
+    Array.from({length: st.monthMedals}, (_,i) =>
+      `<span class="m-medal" style="animation-delay:${i*.07}s">🥇</span>`
+    ).join('');
+  document.getElementById('goal-reached').style.display =
+    st.monthMedals >= MONTHLY_GOAL ? '' : 'none';
+}
+
+/* ── Medal display ────────────────────────────────── */
+function renderMedals(st) {
+  const n = st.medals;
+  const show = Math.min(n, 20);
+  document.getElementById('medals-wrap').innerHTML = n === 0
+    ? '<span style="color:#d1d5db;font-size:.88rem">아직 없어요 — 스티커를 모아봐요!</span>'
+    : Array.from({length:show}, (_,i) =>
+        `<span class="m-badge" style="animation-delay:${i*.12}s">🥇</span>`
+      ).join('') + (n > 20 ? `<span style="font-weight:700;color:#f59e0b;font-size:.9rem">+${n-20}개</span>` : '');
+  document.getElementById('medal-total').textContent = n;
+}
+
+/* ── Celebration ──────────────────────────────────── */
+function showCelebration(st) {
+  const isGoal = st.monthMedals === MONTHLY_GOAL;
+  document.getElementById('cel-emoji').textContent = isGoal ? '🎊' : '🥇';
+  document.getElementById('cel-title').textContent = isGoal ? '이달 목표 달성!' : '금메달 획득!';
+  document.getElementById('cel-sub').innerHTML = isGoal
+    ? `이번 달 금메달 ${MONTHLY_GOAL}개를 모두 모았어요!<br>🍬 간식 교환권을 받을 수 있어요!`
+    : `한 줄을 다 채웠어요! 대단해요!<br>지금까지 금메달 <strong>${st.medals}개</strong>`;
+  const ov = document.getElementById('celebration');
+  ov.classList.add('show');
+  spawnConfetti(ov);
+  playFanfare();
+}
+function closeCel() {
+  const ov = document.getElementById('celebration');
+  ov.classList.remove('show');
+  ov.querySelectorAll('.confetti').forEach(e => e.remove());
+}
+function spawnConfetti(container) {
+  for (let i = 0; i < 28; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.textContent = CF[i % CF.length];
+    el.style.cssText = `left:${Math.random()*100}%;font-size:${.9+Math.random()*1.2}rem;animation-duration:${2+Math.random()*2.2}s;animation-delay:${Math.random()*.8}s;opacity:1`;
+    container.appendChild(el);
+  }
+}
+
+/* ── Sound ────────────────────────────────────────── */
+let _ac;
+function ac() { return _ac || (_ac = new (window.AudioContext || window.webkitAudioContext)()); }
+function playTick() {
+  try {
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(880, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1200, c.currentTime+.08);
+    g.gain.setValueAtTime(.22, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime+.15);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime+.15);
+  } catch(e) {}
+}
+function playRowComplete() {
+  try {
+    const c = ac();
+    [523,659,784,1047].forEach((f,i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      const t = c.currentTime + i*.11;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.28,t+.04);
+      g.gain.exponentialRampToValueAtTime(.001,t+.28);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+.28);
+    });
+  } catch(e) {}
+}
+function playFanfare() {
+  try {
+    const c = ac();
+    [523,659,784,1047,784,880,1047].forEach((f,i) => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      const t = c.currentTime + i*.13;
+      g.gain.setValueAtTime(.28,t); g.gain.exponentialRampToValueAtTime(.001,t+.22);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+.22);
+    });
+  } catch(e) {}
+}
+
+/* ── Enter key ────────────────────────────────────── */
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addStudent();
+});
+
+/* ── Init ─────────────────────────────────────────── */
+load();
+renderList();
+</script>
+</body>
+</html>
