@@ -297,6 +297,18 @@
     .toast-emoji { font-size: 2.6rem; display: block; margin-bottom: 8px; }
     .toast-msg { font-size: clamp(1.1rem,3.5vw,1.4rem); font-weight: 900; color: #1e1b4b; line-height: 1.4; }
 
+    /* Heart particles */
+    .heart-particle {
+      position: fixed; pointer-events: none; z-index: 495;
+      animation: heartFly ease-out forwards;
+      transform: translate(-50%, -50%);
+    }
+    @keyframes heartFly {
+      0%   { opacity: 1; transform: translate(-50%,-50%) scale(0.3) rotate(0deg); }
+      55%  { opacity: 1; transform: translate(calc(-50% + var(--hx,0px)), calc(-50% + var(--hy,-80px))) scale(1.4) rotate(var(--hr,20deg)); }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--hx,0px)*1.4), calc(-50% + var(--hy,-80px)*1.6)) scale(0.7) rotate(calc(var(--hr,20deg)*2)); }
+    }
+
     /* Empty state */
     .empty { text-align: center; padding: 32px 0; color: #9ca3af; grid-column: 1/-1; }
     .empty .ei { font-size: 2.8rem; margin-bottom: 10px; }
@@ -365,8 +377,8 @@
 
 <!-- ── MISTAKE TOAST ── -->
 <div id="mistake-toast">
-  <span class="toast-emoji">💥</span>
-  <div class="toast-msg">그래! 이렇게 하는거야!<br>잘했어! 👏</div>
+  <span class="toast-emoji">👏👏👏</span>
+  <div class="toast-msg">그래! 이렇게 하는거야!<br>잘했어! 🎉</div>
 </div>
 
 <!-- ── CELEBRATION ── -->
@@ -489,7 +501,7 @@ function renderCats() {
      </button>`
   ).join('') +
   `<button class="cat-btn mistake-btn${hasMistake?' on':''}" onclick="pickMistake()">
-     <span class="cat-emoji">😅</span>실수
+     <span class="cat-emoji">💣</span>실수
    </button>`;
   document.getElementById('cat-hint').textContent =
     selCat !== null
@@ -559,7 +571,7 @@ function renderGrid() {
   const st = students[cur];
   document.getElementById('sticker-grid').innerHTML = st.stickers.map((cat) => {
     if (cat === null) return `<div class="sticker-cell"></div>`;
-    if (cat === 5) return `<div class="sticker-cell mistake-cell">😅</div>`;
+    if (cat === 5) return `<div class="sticker-cell mistake-cell">💣</div>`;
     const c = CATS[cat];
     return `<div class="sticker-cell filled" style="background:${c.bg};border-color:${c.color};border-style:solid;">${c.emoji}</div>`;
   }).join('');
@@ -676,7 +688,7 @@ function pickMistake() {
     save();
     const cell = document.querySelectorAll('.sticker-cell')[emptyIdx];
     cell.classList.add('mistake-cell');
-    cell.innerHTML = `<span class="s-new">😅</span>`;
+    cell.innerHTML = `<span class="s-new">💣</span>`;
     playMistakeTick();
     renderCats(); /* 버튼 on 상태 업데이트 */
   }
@@ -687,6 +699,7 @@ function explodeMistake(idx) {
   const cell = document.querySelectorAll('.sticker-cell')[idx];
   cell.classList.add('mistake-explode');
   playBang();
+  spawnHearts(cell);
   cell.addEventListener('animationend', () => {
     st.stickers[idx] = null;
     save();
@@ -696,6 +709,31 @@ function explodeMistake(idx) {
     showMistakeToast();
     renderCats();
   }, { once: true });
+}
+
+function spawnHearts(cell) {
+  const rect = cell.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const hearts = ['💗','💕','❤️','💖','💝','💓','🩷','💞'];
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'heart-particle';
+    el.textContent = hearts[i % hearts.length];
+    const angle = (i / 12) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+    const dist = 70 + Math.random() * 110;
+    el.style.cssText = `
+      left:${cx}px; top:${cy}px;
+      --hx:${Math.cos(angle)*dist}px;
+      --hy:${Math.sin(angle)*dist - 50}px;
+      --hr:${(Math.random()-0.5)*70}deg;
+      font-size:${1+Math.random()*0.8}rem;
+      animation-duration:${0.7+Math.random()*0.6}s;
+      animation-delay:${Math.random()*0.12}s;
+    `;
+    document.body.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
 }
 
 function showMistakeToast() {
