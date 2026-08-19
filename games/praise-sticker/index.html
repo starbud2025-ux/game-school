@@ -276,7 +276,7 @@
     <div class="cel-emoji" id="cel-emoji">🥇</div>
     <div class="cel-title" id="cel-title">금메달 획득!</div>
     <p class="cel-sub" id="cel-sub"></p>
-    <button class="cel-btn" onclick="closeCel()">와, 감사해요! ✨</button>
+    <button class="cel-btn" onclick="closeCel()">축하해요! 🎉</button>
   </div>
 </div>
 
@@ -493,7 +493,7 @@ function showCelebration(st) {
   document.getElementById('cel-emoji').textContent = isGoal ? '🎊' : '🥇';
   document.getElementById('cel-title').textContent = isGoal ? '이달 목표 달성!' : '금메달 획득!';
   document.getElementById('cel-sub').innerHTML = isGoal
-    ? `이번 달 금메달 ${MONTHLY_GOAL}개를 모두 모았어요!<br>🍬 간식 교환권을 받을 수 있어요!`
+    ? `이번 달 금메달 ${MONTHLY_GOAL}개를 모두 모았어요!<br>정말 대단해요! 🎊`
     : `한 줄을 다 채웠어요! 대단해요!<br>지금까지 금메달 <strong>${st.medals}개</strong>`;
   const ov = document.getElementById('celebration');
   ov.classList.add('show');
