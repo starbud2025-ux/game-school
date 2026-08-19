@@ -251,6 +251,52 @@
     }
     .medal-star { font-size: 3.8rem; line-height: 1; }
 
+    /* Mistake button */
+    .mistake-btn {
+      background: #e5e7eb !important;
+      color: #4b5563 !important;
+      border: 3px solid transparent;
+    }
+    .mistake-btn:hover { background: #d1d5db !important; }
+    .mistake-btn.on { border-color: #6b7280 !important; }
+
+    /* Mistake sticker in cell */
+    .sticker-cell.mistake-cell {
+      background: #f3f4f6 !important;
+      border-color: #9ca3af !important;
+      border-style: solid !important;
+      opacity: 0.82;
+    }
+
+    /* Explosion animation */
+    .sticker-cell.mistake-explode {
+      animation: mistakeBang .65s ease-out forwards;
+      transition: none;
+      pointer-events: none;
+    }
+    @keyframes mistakeBang {
+      0%   { transform: scale(1);   filter: brightness(1); }
+      20%  { transform: scale(1.45); filter: brightness(2) saturate(4); background: #fde68a !important; }
+      50%  { transform: scale(1.7); filter: brightness(3); background: #fbbf24 !important; }
+      80%  { transform: scale(1.2); opacity: .5; }
+      100% { transform: scale(0);   opacity: 0; }
+    }
+
+    /* Mistake toast */
+    #mistake-toast {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      background: #fff; border: 4px solid #fbbf24;
+      border-radius: 24px; padding: 28px 44px;
+      text-align: center; z-index: 450;
+      box-shadow: 0 8px 48px rgba(251,191,36,.45);
+      opacity: 0; pointer-events: none;
+      transition: transform .38s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+    }
+    #mistake-toast.show { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    .toast-emoji { font-size: 2.6rem; display: block; margin-bottom: 8px; }
+    .toast-msg { font-size: clamp(1.1rem,3.5vw,1.4rem); font-weight: 900; color: #1e1b4b; line-height: 1.4; }
+
     /* Empty state */
     .empty { text-align: center; padding: 32px 0; color: #9ca3af; grid-column: 1/-1; }
     .empty .ei { font-size: 2.8rem; margin-bottom: 10px; }
@@ -315,6 +361,12 @@
     <div class="medals-wrap" id="medals-wrap"></div>
     <div class="medal-count">🥇 총 <strong id="medal-total">0</strong>개</div>
   </div>
+</div>
+
+<!-- ── MISTAKE TOAST ── -->
+<div id="mistake-toast">
+  <span class="toast-emoji">💥</span>
+  <div class="toast-msg">그래! 이렇게 하는거야!<br>잘했어! 👏</div>
 </div>
 
 <!-- ── CELEBRATION ── -->
@@ -428,13 +480,17 @@ function showStudent(idx) {
 
 /* ── Category buttons ─────────────────────────────── */
 function renderCats() {
+  const hasMistake = students[cur].stickers.some(v => v === 5);
   document.getElementById('cat-btns').innerHTML = CATS.map((c, i) =>
     `<button class="cat-btn${selCat===i?' on':''}"
        style="background:${c.bg};color:${c.text};"
        onclick="pickCat(${i})">
        <span class="cat-emoji">${c.emoji}</span>${c.name}
      </button>`
-  ).join('');
+  ).join('') +
+  `<button class="cat-btn mistake-btn${hasMistake?' on':''}" onclick="pickMistake()">
+     <span class="cat-emoji">😅</span>실수
+   </button>`;
   document.getElementById('cat-hint').textContent =
     selCat !== null
       ? `${CATS[selCat].emoji} ${CATS[selCat].name} 칭찬 스티커가 붙었어요!`
@@ -469,7 +525,7 @@ function placeSticker() {
 
   /* Check row */
   const row = Math.floor(emptyIdx / 5);
-  if (st.stickers.slice(row*5, row*5+5).every(c => c !== null)) {
+  if (st.stickers.slice(row*5, row*5+5).every(c => c !== null && c !== 5)) {
     setTimeout(() => convertRow(row), 320);
   }
   selCat = null;
@@ -503,6 +559,7 @@ function renderGrid() {
   const st = students[cur];
   document.getElementById('sticker-grid').innerHTML = st.stickers.map((cat) => {
     if (cat === null) return `<div class="sticker-cell"></div>`;
+    if (cat === 5) return `<div class="sticker-cell mistake-cell">😅</div>`;
     const c = CATS[cat];
     return `<div class="sticker-cell filled" style="background:${c.bg};border-color:${c.color};border-style:solid;">${c.emoji}</div>`;
   }).join('');
@@ -598,6 +655,83 @@ function playFanfare() {
       g.gain.setValueAtTime(.28,t); g.gain.exponentialRampToValueAtTime(.001,t+.22);
       o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+.22);
     });
+  } catch(e) {}
+}
+
+/* ── Mistake ──────────────────────────────────────── */
+function pickMistake() {
+  const st = students[cur];
+  /* 마지막 실수 스티커 인덱스 */
+  let lastGray = -1;
+  st.stickers.forEach((v, i) => { if (v === 5) lastGray = i; });
+
+  if (lastGray >= 0) {
+    /* 두 번째 클릭: 폭발! */
+    explodeMistake(lastGray);
+  } else {
+    /* 첫 번째 클릭: 회색 스티커 배치 */
+    const emptyIdx = st.stickers.indexOf(null);
+    if (emptyIdx === -1) { alert('스티커판이 꽉 찼어요!'); return; }
+    st.stickers[emptyIdx] = 5;
+    save();
+    const cell = document.querySelectorAll('.sticker-cell')[emptyIdx];
+    cell.classList.add('mistake-cell');
+    cell.innerHTML = `<span class="s-new">😅</span>`;
+    playMistakeTick();
+    renderCats(); /* 버튼 on 상태 업데이트 */
+  }
+}
+
+function explodeMistake(idx) {
+  const st = students[cur];
+  const cell = document.querySelectorAll('.sticker-cell')[idx];
+  cell.classList.add('mistake-explode');
+  playBang();
+  cell.addEventListener('animationend', () => {
+    st.stickers[idx] = null;
+    save();
+    cell.classList.remove('mistake-cell', 'mistake-explode');
+    cell.style.cssText = '';
+    cell.innerHTML = '';
+    showMistakeToast();
+    renderCats();
+  }, { once: true });
+}
+
+function showMistakeToast() {
+  const toast = document.getElementById('mistake-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2600);
+}
+
+function playBang() {
+  try {
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(220, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(55, c.currentTime + .35);
+    g.gain.setValueAtTime(.32, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .45);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .45);
+    /* 노이즈 */
+    const len = Math.floor(c.sampleRate * .3), buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+    const src = c.createBufferSource(), g2 = c.createGain();
+    src.buffer = buf;
+    g2.gain.setValueAtTime(.4, c.currentTime);
+    g2.gain.exponentialRampToValueAtTime(.001, c.currentTime + .35);
+    src.connect(g2); g2.connect(c.destination); src.start(); src.stop(c.currentTime + .35);
+  } catch(e) {}
+}
+
+function playMistakeTick() {
+  try {
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.value = 330;
+    g.gain.setValueAtTime(.15, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, c.currentTime + .2);
+    o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + .2);
   } catch(e) {}
 }
 
