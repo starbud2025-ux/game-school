@@ -371,7 +371,7 @@ function showStudent(idx) {
   const st = students[idx];
   checkMonth(st);
   document.getElementById('view-list').style.display = 'none';
-  document.getElementById('view-student').style.display = '';
+  document.getElementById('view-student').style.display = 'block';
   document.getElementById('stu-name-disp').textContent = `${st.name}`;
   renderCats();
   renderGrid();
