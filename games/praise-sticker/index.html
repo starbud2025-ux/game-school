@@ -258,7 +258,15 @@
       border: 3px solid transparent;
     }
     .mistake-btn:hover { background: #d1d5db !important; }
-    .mistake-btn.on { border-color: #6b7280 !important; }
+
+    /* Remove-mistake button */
+    .remove-btn {
+      background: #fee2e2 !important;
+      color: #991b1b !important;
+      border: 3px solid transparent;
+    }
+    .remove-btn:hover:not(:disabled) { background: #fca5a5 !important; transform: translateY(-2px); }
+    .remove-btn:disabled { opacity: 0.38; cursor: not-allowed; transform: none !important; }
 
     /* Mistake sticker in cell */
     .sticker-cell.mistake-cell {
@@ -500,8 +508,11 @@ function renderCats() {
        <span class="cat-emoji">${c.emoji}</span>${c.name}
      </button>`
   ).join('') +
-  `<button class="cat-btn mistake-btn${hasMistake?' on':''}" onclick="pickMistake()">
+  `<button class="cat-btn mistake-btn" onclick="pickMistake()">
      <span class="cat-emoji">💣</span>실수
+   </button>` +
+  `<button class="cat-btn remove-btn" onclick="pickRemoveMistake()" ${hasMistake ? '' : 'disabled'}>
+     <span class="cat-emoji">🧹</span>실수제거
    </button>`;
   document.getElementById('cat-hint').textContent =
     selCat !== null
@@ -673,25 +684,23 @@ function playFanfare() {
 /* ── Mistake ──────────────────────────────────────── */
 function pickMistake() {
   const st = students[cur];
-  /* 마지막 실수 스티커 인덱스 */
+  const emptyIdx = st.stickers.indexOf(null);
+  if (emptyIdx === -1) { alert('스티커판이 꽉 찼어요!'); return; }
+  st.stickers[emptyIdx] = 5;
+  save();
+  const cell = document.querySelectorAll('.sticker-cell')[emptyIdx];
+  cell.classList.add('mistake-cell');
+  cell.innerHTML = `<span class="s-new">💣</span>`;
+  playMistakeTick();
+  renderCats();
+}
+
+function pickRemoveMistake() {
+  const st = students[cur];
   let lastGray = -1;
   st.stickers.forEach((v, i) => { if (v === 5) lastGray = i; });
-
-  if (lastGray >= 0) {
-    /* 두 번째 클릭: 폭발! */
-    explodeMistake(lastGray);
-  } else {
-    /* 첫 번째 클릭: 회색 스티커 배치 */
-    const emptyIdx = st.stickers.indexOf(null);
-    if (emptyIdx === -1) { alert('스티커판이 꽉 찼어요!'); return; }
-    st.stickers[emptyIdx] = 5;
-    save();
-    const cell = document.querySelectorAll('.sticker-cell')[emptyIdx];
-    cell.classList.add('mistake-cell');
-    cell.innerHTML = `<span class="s-new">💣</span>`;
-    playMistakeTick();
-    renderCats(); /* 버튼 on 상태 업데이트 */
-  }
+  if (lastGray < 0) return;
+  explodeMistake(lastGray);
 }
 
 function explodeMistake(idx) {
