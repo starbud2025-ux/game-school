@@ -216,15 +216,40 @@
     @keyframes cfFall { to { top: 110vh; opacity: 0; transform: rotate(540deg); } }
 
     /* Medal hero */
-    .medal-hero { text-align: center; margin: 2px 0 22px; }
-    .hero-medal {
-      font-size: 6rem; line-height: 1; display: inline-block;
+    .medal-hero { text-align: center; margin: 2px 0 24px; }
+    .custom-medal {
+      display: inline-flex; flex-direction: column; align-items: center;
       animation: heroShine 2.8s ease-in-out infinite;
     }
     @keyframes heroShine {
-      0%,100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 4px 14px rgba(255,215,0,.55)); }
-      50%      { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 8px 30px rgba(255,215,0,1)) brightness(1.12); }
+      0%,100% { transform: scale(1) rotate(-3deg); filter: drop-shadow(0 6px 18px rgba(255,215,0,.6)); }
+      50%      { transform: scale(1.1) rotate(3deg); filter: drop-shadow(0 10px 34px rgba(255,215,0,1)) brightness(1.1); }
     }
+    .medal-ribbon { display: flex; gap: 5px; margin-bottom: -10px; }
+    .ribbon-l {
+      width: 18px; height: 44px;
+      background: linear-gradient(180deg, #f87171, #dc2626);
+      border-radius: 4px 4px 0 0; transform: rotate(-6deg);
+    }
+    .ribbon-r {
+      width: 18px; height: 44px;
+      background: linear-gradient(180deg, #dc2626, #991b1b);
+      border-radius: 4px 4px 0 0; transform: rotate(6deg);
+    }
+    .medal-disc {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle at 38% 32%, #fff0a0, #f5c518 45%, #c9920a 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 28px rgba(245,197,24,.7),
+                  inset 0 -6px 12px rgba(0,0,0,.13),
+                  inset 0 6px 12px rgba(255,255,255,.4);
+      position: relative; z-index: 1;
+    }
+    .medal-disc::before {
+      content: ''; position: absolute; inset: 10px;
+      border-radius: 50%; border: 3px solid rgba(255,255,255,.5);
+    }
+    .medal-star { font-size: 3.8rem; line-height: 1; }
 
     /* Empty state */
     .empty { text-align: center; padding: 32px 0; color: #9ca3af; grid-column: 1/-1; }
@@ -245,7 +270,15 @@
     <p>5칸 한 줄을 채우면 금메달! 한 학기 동안 모아봐요</p>
   </div>
   <div class="medal-hero">
-    <div class="hero-medal">🥇</div>
+    <div class="custom-medal">
+      <div class="medal-ribbon">
+        <div class="ribbon-l"></div>
+        <div class="ribbon-r"></div>
+      </div>
+      <div class="medal-disc">
+        <span class="medal-star">⭐</span>
+      </div>
+    </div>
   </div>
   <div class="student-grid" id="student-grid"></div>
   <div class="add-form">
